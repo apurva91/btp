@@ -1,0 +1,51 @@
+body {
+    background: #fafafa;
+    color: #333333;
+    margin-left: 5rem;
+    font-family: arial,sans-serif;
+    font-size: small;
+}
+
+h2 {
+    color: #001ba0 ;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+
+.form-container {
+    width: 50%;
+    height: 40px;
+    border-radius: 2px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.08);
+}
+#form {
+    height: 100%;
+    width: 100%;
+}
+.search-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+input {
+    width: 100%;
+    border: none;
+    padding-left: 10px;
+  }
+
+.submit-field {
+    height: 100%;
+}
+
+.select-file {
+    display: flex;
+    margin-top: 10px;
+}
+
+#filelabel {
+    padding-top: 8px;
+}
+#avatar {
+    color:#545454;
+    font-size: small;
+    text-align: left;
+}

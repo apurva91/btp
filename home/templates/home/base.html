@@ -1,0 +1,69 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Result for {{query}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/detail.css' %}" />
+    <!-- <script src="main.js"></script> -->
+</head>
+<body>
+    <div class="container">
+        <div class="top-container">
+            <div class="form-container">
+                <form action="{% url 'home:result' %}" method="post" id="form">
+                    {% csrf_token %}
+                    <div class="search-container">
+                        <input id="search-field" type="text" name="query">
+                        <!-- <button id="submit-field" type="submit">Search</button> -->
+                    </div>	
+                    <div class="select-file">
+                        <label for="avatar">Choose a gene file:</label>
+                        <input type="file" id="avatar" name="avatar" accept="image/png, image/jpeg">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="leftright-container">
+            <div class="left-container">
+                {% if topdocs %}
+                {% for title , abs in topdocs %}
+                <div class="titleabs">
+                    <h2><a>{{title}}</a></h2>
+                    <span class="abs">{{abs}}</span>
+                </div>
+                {% endfor %} 
+                {% endif %}
+            </div>
+            <div class="middle-container">
+                
+            </div>
+            <div class="right-container">
+                <div>
+                    <h1>Other possible search queries</h1>
+                </div>
+                <div class="meshterms">
+                    {% if mesharr %}
+                        {% for zipmesh in mesharr %}
+                            {% for mesh, meshid in zipmesh %}
+                                <li class="meshterm">
+                                    <a href="{% url 'home:meshresult' meshid %}" class="meshlink">{{mesh}}</a>
+                                </li>
+                            {% endfor %}
+                        {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="pagination">
+            
+        </div>
+    </div>
+</body>
+<footer class="footer-container">
+
+</footer>
+</html>
+

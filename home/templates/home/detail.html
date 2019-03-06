@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Result for {{query}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/detail.css' %}" />
+    <script>
+        feedback = {};
+        function onRelevant(json_no, currindex, offset){
+            let rel = document.getElementById('relevant_'+offset);
+            let irr = document.getElementById('irrelevant_'+offset);
+            rel.setAttribute("style","background: green; color: white; border-color: green");
+            irr.setAttribute("style","background: white; color: #cc4159");
+            // Add current abs to feedback
+            obj = {};
+            obj["relevant"] = 1;
+            obj["json_no"] = json_no;
+            obj["offset"] = parseInt(currindex) + parseInt(offset);
+            feedback[offset] = obj;
+            // console.log(feedback);
+            let reas = document.getElementById('research');
+            let reas_button = document.getElementById("research-button");
+            let paginate = document.getElementById("paginate-container");
+
+            if(Object.keys(feedback).length >= 1){
+                reas.style.display = 'block';
+                reas_button.style.background = '#f05771';
+                reas_button.style.color = 'white';
+                paginate.style.display = 'none';
+            }
+            else{
+                paginate.style.display = 'block';
+                reas.style.display = 'none';
+            }
+        }
+        function onIrrelevant(json_no,currindex,offset) {
+            let rel = document.getElementById('relevant_'+offset);
+            let irr = document.getElementById('irrelevant_'+offset);
+            rel.setAttribute("style","background: white; color: #cc4159;");
+            irr.setAttribute("style","background: #f05771; color: white;");
+            // Add current abs to feedback
+            obj = {};
+            obj["relevant"] = 0;
+            obj["json_no"] = json_no;
+            obj["offset"] = parseInt(currindex) + parseInt(offset);
+            feedback[offset] = obj;
+            console.log(feedback);
+            let reas = document.getElementById("research");
+            let reas_button = document.getElementById("research-button");
+            let paginate = document.getElementById("paginate-container");
+            if(Object.keys(feedback).length >= 1){
+                reas.style.display = 'block';
+                reas_button.style.background = '#f05771';
+                reas_button.style.color = 'white';
+                paginate.style.display = 'none';
+            }
+            else{
+                paginate.style.display = 'block';
+                reas.style.display = 'none';
+            }
+        }
+        function refreshPage(){
+            console.log(feedback);
+            feedback = JSON.stringify(feedback);
+            $.ajax({
+                type: "POST",
+                url: "/user-feedback/",
+                data: {
+                    feedback,
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function (data){
+                    console.log("Success!! "+data.message);
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="top-container">
+            <div class="form-container">
+                <form action="{% url 'home:result' %}" method="post" id="form">
+                    {% csrf_token %}
+                    <div class="search-container">
+                        <input id="search-field" type="text" name="query">
+                    </div>	
+                    <div class="select-file">
+                        <label for="avatar" id="filelabel">Choose a gene file:</label>
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="file" id="avatar" name="avatar" accept="text">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="leftright-container">
+            <div class="left-container">
+                {% if topdocs %}
+                    {% for title , abs in topdocs %}
+                    <div class="titleabs">
+                        <h2><a href="{% url 'home:paperdetail' json_no currindex forloop.counter0 %}">{{title}}</a></h2>
+                        <span class="abs">{{abs}}</span>
+                        <div class="relevant-container">
+                            <div><button id="relevant_{{forloop.counter0}}" onclick="onRelevant('{{json_no}}', '{{currindex}}','{{forloop.counter0}}')" class="relevancy">Relevant</button></div>
+                            &nbsp;&nbsp;
+                            <div><button id="irrelevant_{{ forloop.counter0 }}" onclick="onIrrelevant('{{json_no}}', '{{currindex}}','{{forloop.counter0}}')" class="relevancy">Irrelevant</button></div>
+                        </div>
+                    </div>
+                    {% endfor %} 
+                {% endif %}
+            </div>
+            <div class="middle-container">
+                <div>
+                    <h2>Visualize related genes and relation among them</h2>
+                </div>
+                <div class="cloud">
+                    <span><a href="{% url 'home:genecloud' json_no %}">Gene Cloud </a></span>
+                    <span><a href="{% url 'home:generelation' json_no %}">Gene Relation</a></span>
+                    <span><a href="{% url 'home:meshcloud' json_no %}">Mesh Cloud</a></span>
+                </div>
+            </div>
+            <div class="right-container">
+                <div>
+                    <h2>Other specific search queries</h2>
+                </div>
+                <div class="meshterms">
+                    {% if mesharr %}
+                        {% for zipmesh in mesharr %}
+                            {% for mesh, meshid in zipmesh %}
+                                <li class="meshterm">
+                                    <a href="{% url 'home:meshresult' meshid %}" class="meshlink">{{mesh}}</a>
+                                </li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="pagination">
+            <div id="paginate-container">
+                {% if previndex >= 0 %}
+                <a href="{% url 'home:paginate' json_no previndex %}" class="paginate-button">Prev</a>
+                {% endif %}
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="{% url 'home:paginate' json_no nextindex %}" class="paginate-button">Next</a>
+            </div>
+            <div id="research">
+                <button id="research-button" class="relevancy" onclick="refreshPage()" >Re-search</button>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script>
+</body>
+<footer class="footer-container">
+
+</footer>
+</html>
+

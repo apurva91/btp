@@ -1,0 +1,272 @@
+TIMP4
+TIMP3
+TIMP2
+TIMP1
+ENSG00000167346
+P16035
+P03956
+matrix metallopeptidase 19
+MGC126592
+MGC126590
+NM_024302
+membrane-inserted
+MMP23A
+Q9NPA2
+matrix metallopeptidase 11
+matrix metallopeptidase 10
+matrix metallopeptidase 13
+matrix metallopeptidase 12
+matrix metallopeptidase 15
+matrix metallopeptidase 14
+matrix metallopeptidase 17
+matrix metallopeptidase 16
+NM_006983
+AF315683
+ENSG00000102265
+MMPL1
+membrane type 1 metalloprotease
+ENSG00000099953
+ENSG00000157227
+gelatinase B
+gelatinase A
+U76456
+MT6-MMP
+Z48482
+NM_005941
+NM_005940
+MPSL1
+MMP23B
+tissue inhibitor of metalloproteinase 2
+ENST00000569037
+chromosome 8 open reading frame 57
+matrilysin 2
+matrix metallopeptidase 23A
+matrix metallopeptidase 23B
+matrix metallopeptidase 24
+matrix metallopeptidase 25
+matrix metallopeptidase 26
+matrix metallopeptidase 27
+matrix metallopeptidase 20
+matrix metallopeptidase 21
+MMP2 antisense RNA 1
+STMY1
+STMY2
+STMY3
+D85511
+enamelysin
+Q9ULZ9
+L23808
+endometase
+matrix metallopeptidase-like 1
+MMP24 opposite strand
+J05556
+stromelysin 2
+stromelysin 3
+SFD
+stromelysin 1
+MTMMP2
+MT2-MMP
+CLG4A
+MMP15
+MMP16
+CLG4B
+MMP10
+MMP11
+MMP12
+MMP13
+CSC-21K
+ENSG00000035862
+membrane-type 5 matrix metalloproteinase
+pseudoinflammatory
+MMP18
+MMP19
+X75308
+matrix metalloproteinase 24
+matrix metalloproteinase 25
+matrix metalloproteinase 26
+matrix metalloproteinase 27
+matrix metalloproteinase 20
+matrix metalloproteinase 21
+matrix metalloproteinase 22
+PUMP-1
+matrix metalloproteinase 28
+MT5-MMP
+X07820
+Q9Y5R2
+MT3-MMP
+TIMP metallopeptidase inhibitor 1
+Q99542
+TIMP metallopeptidase inhibitor 2
+MMP24 antisense RNA 1
+DA451679
+ENSG00000262406
+72kDa type IV collagenase
+HME
+collagenase 3
+matrix metalloproteinase 19
+MMP25 antisense RNA 1
+P08254
+P08253
+uterine
+TIMP metallopeptidase inhibitor 4
+Q9NRE1
+P45452
+P22894
+ENSG00000196611
+92kDa type IV collagenase
+BG546906
+O75900
+collagenase inhibitor
+Q9H306
+ENSG00000137745
+P14780
+ENSG00000125966
+P24347
+MMP25-AS1
+Y12779
+ENSG00000157150
+matrix metalloprotease 27
+NM_003254
+matrix metalloproteinase 23A
+interstitial collagenase
+ENSG00000271447
+ENSG00000100234
+MMP28
+MMP14
+DKFZp761D112
+MMP24OS
+tissue inhibitor of metalloproteinase 1
+MT4-MMP
+tissue inhibitor of metalloproteinase 3
+C8orf57
+ENSG00000156103
+tissue inhibitor of metalloproteinase 4
+O60882
+MMP25
+ENSG00000137675
+MMP17
+ENSG00000198598
+MMP24
+92kDa gelatinase
+ENSG00000215914
+MIFR-1
+ENSG00000123342
+MMP27
+P51512
+P51511
+X89576
+matrix metalloproteinase 11
+matrix metalloproteinase 10
+matrix metalloproteinase 13
+matrix metalloproteinase 12
+matrix metalloproteinase 15
+matrix metalloproteinase 14
+matrix metalloproteinase 17
+matrix metalloproteinase 16
+Q8N119
+AK124978
+Q99727
+NM_006690
+NR_002946
+MMP22
+ENSG00000126005
+matrix metallopeptidase 9
+matrix metallopeptidase 8
+erythroid potentiating activity
+pseudogene
+NM_022122
+MT1-MMP
+matrix metallopeptidase 1
+matrix metallopeptidase 3
+CLG
+TIMP
+matrix metallopeptidase 7
+BC026114
+ENSG00000261971
+MMP2-AS1
+ENSG00000149968
+AF145442
+ENSG00000260135
+AF230354
+NM_021801
+femalysin
+AF131284
+matrix metalloproteinase in the female reproductive tract
+NM_002427
+MIFR
+TIMP metallopeptidase inhibitor 3
+EPO
+EPILYSIN
+matrix metallopeptidase 28
+P01033
+MMP24-AS1
+Sorsby fundus dystrophy
+STMY
+TBE-1
+MM28
+72kDa gelatinase
+NM_002422
+progelatinase
+CLGI
+P09238
+NM_022468
+P09237
+macrophage elastase
+matrilysin
+NM_016155
+X92521
+matrix metalloproteinase 23B
+SMCP-2
+MMP-28
+P35625
+P50281
+RASI-1
+NM_000362
+Z11887
+matrix metallopeptidase 2
+matrix metalloproteinase 9
+matrix metalloproteinase 8
+NM_004995
+matrix metalloproteinase 7
+ENSG00000189409
+matrix metalloproteinase 1
+matrix metalloproteinase 3
+matrix metalloproteinase 2
+NM_003256
+NM_003255
+ENSG00000102996
+ENSG00000087245
+AF331526
+P39900
+ENSG00000137674
+ENSG00000100985
+ENSG00000166670
+MMP26
+MMP21
+MMP20
+AF195192
+ENSG00000137673
+X05232
+ENSG00000118113
+MMP-25
+NM_002429
+NM_002428
+CLG4
+NM_002426
+NM_002424
+NM_001355003
+CLG1
+NM_002421
+CLG3
+neutrophil collagenase
+NR_123723
+Q9H239
+ENSG00000154485
+MMP8
+MMP9
+MMP7
+MMP1
+MMP2
+MMP3
+X54925
+

@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Paper detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/paperdetail.css' %}" />
+    <script>
+        // keep added gene in an array
+        let genes = [];
+        let i = 0;
+        function addgene(){
+            genes[i++] = window.getSelection().toString();
+            alert(genes[i-1]);
+        }
+    </script>
+</head>
+<body>
+    <div>
+        {% if title %}
+            <h2>{{title}}</h2>
+        {% endif %}
+        {% if abstract %}
+            <div>
+                <h3>Abstract</h3>
+                <span class="abs">{{abstract | safe}}</span>
+            </div>
+        {% endif %}
+        <div class="bottom-container">
+            <div class="mesh-container">
+                {% if pmid %}
+                    <h3>PMID : {{pmid}}</h3>
+                {% endif %}
+                {% if meshterm %}
+                    <h3>Mesh terms: </h3>
+                    <ol>
+                        {% for mesh in meshterm %}
+                            <li>{{mesh}}</li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+            </div>
+            <div class="feedback-container">
+                <h3>Do you see new genes ? </h3>
+                <div style="margin: auto">
+                    <button onclick="addgene()" id="feedback-button">Select the gene by mouse and click here</button>
+                </div>
+            </div>
+        </div>
+    </div>    
+</body>
+</html>

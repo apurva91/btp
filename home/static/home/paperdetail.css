@@ -1,0 +1,41 @@
+body {
+    background: #ffffff;
+    color: #333333;
+    font-family: arial,sans-serif;
+    font-size: medium;
+    margin: 20px;
+}
+
+.abs {
+    color:#545454;
+}
+
+h2 {
+    color: #191983;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+h3 {
+    color: #c0299f;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+
+.highlight {
+    background-color: yellow;
+}
+.bottom-container {
+    display: flex;
+}
+.mesh-container {
+    flex: 1;
+}
+.feedback-container {
+    flex: 1;
+    display: flex;
+}
+#feedback-button {
+    border: none;
+    background: pink;
+    padding: 10px;
+    border-radius: 15px;
+    cursor: pointer;
+}

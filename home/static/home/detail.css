@@ -1,0 +1,144 @@
+body {
+    background: #ffffff;
+    color: #333333;
+    font-family: arial,sans-serif;
+    font-size: small;
+    margin: 0px;
+}
+footer {
+    margin-left: 0%;
+}
+h2,h3 {
+    color: #700fcb;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+a:hover {
+    text-decoration: underline;
+    color: green;
+    cursor: pointer;
+}
+.container {
+    margin-left: 8%;
+    margin-top: 2%;
+}
+.top-container {
+    height: 100px;
+}
+.form-container {
+    width: 50%;
+    height: 40px;
+    border-radius: 2px;
+    box-shadow: 0 2px 2px 0 rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.08);
+}
+#form {
+    height: 100%;
+    width: 100%;
+}
+.search-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+input {
+    width: 100%;
+    border: none;
+    padding-left: 10px;
+  }
+
+.submit-field {
+    height: 100%;
+}
+
+.select-file {
+    display: flex;
+    margin-top: 10px;
+}
+#filelabel {
+    padding-top: 8px;
+}
+#avatar {
+    color:#545454;
+    font-size: small;
+    text-align: left;
+}
+
+.leftright-container{
+    display: flex;
+}
+
+.left-container {
+    flex: 2;
+    margin-top: 10px;
+    width: 50%;
+}
+.middle-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.cloud {
+    padding-left: 30px;
+    display: flex;
+    flex-direction: column;
+}
+.right-container {
+    flex: 1;
+    width: 30%;
+    word-wrap: break-word;
+}
+
+.titleabs {
+    margin-bottom: 26px;
+}
+
+.abs {
+   color:#545454;
+}
+.relevant-container {
+    display: flex;
+    flex-direction: row;
+    margin-top: 5px;
+}
+.relevancy {
+    border: pink 1px solid;
+    border-radius: 10px;
+    color: #cc4159;
+    font-size: small;
+    padding: 3px 10px;
+    background: white;
+    cursor: pointer;
+}
+#relevant:hover {
+    background: green;
+    color: white;
+}
+#irrelevant:hover {
+    background: #f05771;
+    color: white;
+}
+
+.meshterms {
+    height: 500px;
+    overflow-y: auto;
+}
+.meshterm {
+    margin-bottom: 5px;
+}
+
+.meshlink {
+    font-weight: lighter;
+    color: #001ba0;
+}
+
+.pagination {
+    width: 50%;
+    text-align: center;
+}
+#research {
+    display: none;
+}
+.footer-container {
+    margin-top: 20px;
+    height: 50px;
+    background: #f2f2f2;
+}

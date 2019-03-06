@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Welcome to - MEDLINE Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/index.css' %}" />
+</head>
+<body>
+    <div class="form-container">
+        <form action="{% url 'home:result' %}" method="post" id="form">
+            {% csrf_token %}
+            <div class="search-container">
+                <input id="search-field" type="text" name="query" id="InputID">
+                <!-- <button id="submit-field" type="submit">Search</button> -->
+            </div>	
+            <div class="select-file">
+                <label for="avatar" id="filelabel">Choose a gene file:</label>
+                &nbsp;&nbsp;&nbsp;&nbsp; 
+                <input type="file" id="avatar" name="filepath" accept="text">
+            </div>
+        </form>
+    </div>    
+</body>
+</html>

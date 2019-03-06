@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Result for {{query}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/detail.css' %}" />
+</head>
+<body>
+    <div class="container">
+        <div class="top-container">
+            <div class="form-container">
+                <form action="{% url 'home:result' %}" method="post" id="form">
+                    {% csrf_token %}
+                    <div class="search-container">
+                        <input id="search-field" type="text" name="query">
+                    </div>	
+                    <div class="select-file">
+                        <label for="avatar" id="filelabel">Choose a gene file:</label>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="file" id="avatar" name="avatar" accept="text">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="leftright-container">
+            <div class="left-container">
+                {% if topdocs %}
+                    {% for title , abs in topdocs %}
+                    <div class="titleabs">
+                        <h2><a href="{% url 'home:paperdetail' json_no currindex forloop.counter0 %}">{{title}}</a></h2>
+                        <span class="abs">{{abs}}</span>
+                    </div>
+                    {% endfor %} 
+                {% endif %}
+            </div>
+            <div class="middle-container">
+                <div>
+                    <h2>Visualize related genes and relation among them</h2>
+                </div>
+                <div class="cloud">
+                    <span><a href="{% url 'home:genecloud' json_no %}">Gene Cloud </a></span>
+                    <span><a href="{% url 'home:generelation' json_no %}">Gene Relation</a></span>
+                    <span><a href="{% url 'home:meshcloud' json_no %}">Mesh Cloud</a></span>
+                </div>
+            </div>
+            <div class="right-container">
+                <div>
+                    <h2>Other specific search queries</h2>
+                </div>
+                <div class="meshterms">
+                    {% if mesharr %}
+                        {% for zipmesh in mesharr %}
+                            {% for mesh, meshid in zipmesh %}
+                                <li class="meshterm">
+                                    <a href="{% url 'home:meshresult' meshid %}" class="meshlink">{{mesh}}</a>
+                                </li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="pagination">
+            <div>
+                {% if previndex >= 0 %}
+                    <a href="{% url 'home:paginate' json_no previndex %}" class="paginate-button">Prev</a>
+                {% endif %}
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a href="{% url 'home:paginate' json_no nextindex %}" class="paginate-button">Next</a>
+            </div>
+            
+        </div>
+    </div>
+</body>
+<footer class="footer-container">
+
+</footer>
+</html>
+
