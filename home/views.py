@@ -254,9 +254,11 @@ def feedback(request):
 			irrelevant_indices.append(data[obj]['offset'])
 	# For each relevant paper count frequency of each word and 
 	# consider top frequent terms for next search
-	
+	print("relevant indices: ",relevant_indices)
+	# print("irrele: ", irrelevant_indices)
 	if json_name:
 		file_name = "home/data_folder/"+query+"/"+str(json_name)+'.json'
+		print("file: ", file_name)
 		f = open(file_name, 'r')
 		json_object = json.load(f)
 		f.close()
@@ -265,8 +267,9 @@ def feedback(request):
 		data_mesh = json_object["meshterms"]
 		abs = ""
 		relevant_meshterms = []
-		if len(relevant_indices):
+		if len(relevant_indices) > 0:
 			for index in relevant_indices:
+				print("index selected: ", index)
 				abs += data_abstract[index]
 				relevant_meshterms.append(data_mesh[index])
 		print(relevant_meshterms)		
@@ -284,8 +287,11 @@ def feedback(request):
 		# Method two: Association mining
 		# calculate association 'interest measure for each unique concept' and get the top scored concepts
 		# for next round of search
-		alllines = findalllines(data_abstract)
-		allconcepts = findallconcepts(data_abstract)
+		relevant_abs = []
+		for index in relevant_indices:
+			relevant_abs.append(data_abstract[index])
+		alllines = findalllines(relevant_abs)
+		allconcepts = findallconcepts(relevant_abs)
 		print("allconcepts: ",len(allconcepts))
 		concept_score = {}
 		for concept in allconcepts:
@@ -310,6 +316,7 @@ def feedback(request):
 			if mul:
 				concept_score[concept] = len(alllines)*intersectioncount / mul
 		print(concept_score)
+		
 		# First method : find intersection with all mesh explosion and return result for nearest mesh
 		# mesh_explo = mesh_explosion.DataForEachMeshTerm(None,None)
 		# expanded_mesh_terms = mesh_explo.getMeshTermCombinations(mesh_terms)
