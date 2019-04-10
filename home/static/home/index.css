@@ -37,8 +37,8 @@ input {
 }
 
 .select-file {
-    display: flex;
     margin-top: 10px;
+    display: none;
 }
 
 #filelabel {

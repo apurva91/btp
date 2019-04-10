@@ -17,8 +17,8 @@ class DataForEachMeshTerm():
     def get_search_term(self):
         return self.query
 
-    def getMeshTermCombinations(self):
-        terms = self.mesh_terms
+    def getMeshTermCombinations(self,mesh_terms):
+        terms = mesh_terms
         part = ""
         mystr = []
         skip = 0
@@ -84,17 +84,18 @@ class DataForEachMeshTerm():
     def fetchMeshTermdata(self):
         _retmax = 100
         if self.mesh_terms:
-            _terms = self.getMeshTermCombinations()
+            self.expanded_mesh_terms = self.getMeshTermCombinations(self.mesh_terms)
         else:
             print("No mesh term returned by PUBMED API..")
             return
-        if _terms and self.query:
+        if self.expanded_mesh_terms and self.query:
+            print("Total expanded meshterms: ",len(self.expanded_mesh_terms))
             print("Getting information for each mesh-term and create a json file...")
             if not os.path.exists(self.get_data_foldername(self.get_search_term())):
                 os.mkdir(self.get_data_foldername(self.get_search_term()))
                 count = 0
                 print('=================================================')
-                for term in _terms:
+                for term in self.expanded_mesh_terms:
                     print(term)
                     count = count + 1
                     # Getting abstract here

@@ -27,8 +27,8 @@ class Clusterer:
 		    f.close()
 		    raw_data.append(json_object)
 		    
-		print ('Number of Cluster Points -------> ')
-		print (len(raw_data))
+		print('Number of Cluster Points -------> ')
+		print(len(raw_data))
 
 		self.cluster_data = raw_data
 		self.kmeans = kmeans
@@ -71,10 +71,11 @@ class Clusterer:
 		else:
 			km = DBSCAN(eps=float(self.hyper), min_samples=10).fit(X)
 			num_clusters = len(set(km.labels_))
-
+		# labels contains cluster number for each json (position wise) i.e. cluster_labels[0] contains cluster
+		# number for 0-th json and so on 
 		cluster_labels = km.labels_
 		cluster_centers = km.cluster_centers_
-		# print("cluster centers: ",cluster_centers)
+		print("cluster labels: ",cluster_labels)
 		query_clusters = []
 		query_clusters_pmids = []
 
@@ -83,10 +84,9 @@ class Clusterer:
 		    tempset = set()
 		    query_clusters_pmids.append(tempset)
 		    query_clusters.append(temp)
-		# Each row(cluster 0 to 8) will contain its corresponding MeshTerm nos
+		# Each row(cluster 0 to 8) will contain its corresponding json nos
 		for i in range(0,len(cluster_labels)):
 			query_clusters[cluster_labels[i]].append(i+1)
-
 			pmids = self.cluster_data[i]["articleIds"]
 			# print("pmids: ", pmids)
 			for pmid in pmids:
@@ -100,56 +100,75 @@ class Clusterer:
 
 		relevant_docs = self.related_docs
 
-		random.shuffle(relevant_docs)
+		# random.shuffle(relevant_docs)
 
 		# learning vs testing split of Golden corpus 
 
 		training_cnt = int(1.0*len(relevant_docs))
 		relevant_known = set(relevant_docs[:training_cnt])
-		relevant_blind = set(relevant_docs[training_cnt:])
+		# relevant_blind = set(relevant_docs[training_cnt:])
 		
-		cluster_score = [float(len(relevant_known.intersection(cluster_pmids))/(len(cluster_pmids) + 1)) for cluster_pmids in query_clusters_pmids]
+		cluster_score = [1.0 + float(len(relevant_known.intersection(cluster_pmids))/(len(cluster_pmids) + 1)) for cluster_pmids in query_clusters_pmids]
 		
 		print(cluster_score)
-		cluster_score_relative = [float(score/max(cluster_score)) for score in cluster_score]
-		
+		cluster_score_relative = [float(score/(1.0 + max(cluster_score))) for score in cluster_score]
+		print(cluster_score_relative)
 		# blind_intersection = [len(relevant_blind.intersection(cluster_pmids)) for cluster_pmids in query_clusters_pmids]
 		# print ("Cluster ID\tRelevance Score\tBlind Intersection")
 		# for i in range(0,num_clusters):
 		#     print (str(i) + "\t\t" + str(cluster_score_relative[i]) + "\t\t" + str(blind_intersection[i]))
 
+		# Orderdict with duplicate keys(i.e. cluster score)
 		clus_dict = OrderedDict()
-		final_corpus = set()
 		for i in range(0,num_clusters):
-			if cluster_score_relative[i] > 0.5:
-				clus_dict[cluster_score_relative[i]] = i
-
-		sortedscore = sorted(clus_dict.items(), reverse=True)
-		# print(sortedscore)
+			if cluster_score_relative[i] > 0.0:
+				try:
+					clus_dict[cluster_score_relative[i]].append(i)
+				except KeyError:
+					clus_dict[cluster_score_relative[i]] = []
+					clus_dict[cluster_score_relative[i]].append(i)
+		sorted_dict_by_score = sorted(clus_dict.items(), reverse=True)
+		print(sorted_dict_by_score)
+		
 		optimized_query = []
 		optimized_query_ids = []
 		done = 0
 		j = 0
 		minp = sys.float_info.max
-		
-		for _score , _clus_no in sortedscore:
-			optimized_query.append([])
-			optimized_query_ids.append([])
-			if not done:
-				print('Number of Abstracts in Best Cluster: {}',len(query_clusters_pmids[_clus_no]))
-			for _k in query_clusters[_clus_no]:
-				if not done:
-					dist = distance.euclidean(cluster_centers[_clus_no], X[_k - 1].toarray())
-					if dist < minp:
-						minp = dist
-						representative = data_query_label[_k-1]
-						representative_id = _k
-						print("----------------------------------------",_k)
-				optimized_query_ids[j].append(_k)
-				optimized_query[j].append(data_query_label[_k-1])
-			j += 1
-			done = 1
+		# representative contains best mesh query
+		representative = None
+		# representative_id contains best json number
+		representative_id = 0
 
+		for _score , _clus_no_arr in sorted_dict_by_score:
+			if len(_clus_no_arr) > 0:
+				for _clus_no in _clus_no_arr:
+					# Making sure cluster has atleast one query in it
+					if len(query_clusters[_clus_no]) > 0:
+						print("clusno: ",_clus_no)
+						optimized_query.append([])
+						optimized_query_ids.append([])
+						if not done:
+							print("Cluster id: ",_clus_no)
+							print('Number of Abstracts in Best Cluster: {}',len(query_clusters_pmids[_clus_no]))
+						# Finding representative for a cluster by calculating euclidian distance between each json 
+						# with cluster center of a cluster
+						for json_no in query_clusters[_clus_no]:
+							# Only for first cluster i.e best cluster
+							if not done:
+								dist = distance.euclidean(cluster_centers[_clus_no], X[json_no - 1].toarray())
+								if dist < minp:
+									minp = dist
+									representative = data_query_label[json_no-1]
+									representative_id = json_no
+									print("----------------------------------------",json_no)
+							optimized_query_ids[j].append(json_no)
+							optimized_query[j].append(data_query_label[json_no-1])
+						j += 1
+						done = 1
+
+		print("representative: ", representative)
+		print("id: ", representative_id)
 		# open given gene list
 		# path = ("home/gene_list.xlsx")
 		# wb = xlrd.open_workbook(path)

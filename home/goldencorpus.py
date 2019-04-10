@@ -18,15 +18,38 @@ class GoldenCorpus():
     def get_mesh_terms(self):
         return self.mesh_terms
     
-    def get_rel_docs_pmid(self):
+    def get_rel_docs_pmid(self,feedbackarr):
         rel_doc = []
-        rdoc = open("home/pmid.txt","r")
+        try:
+            rdoc = open("home/goldenpmid.txt","r")
+        except FileNotFoundError:
+            self.create_relevant_docs()
+            rdoc = open("home/goldenpmid.txt","r")
+            
         arr = rdoc.read().split('\n')
         for v in arr:
             if v != '':
                 rel_doc.append(int(v,10))
         rdoc.close()
-        return rel_doc
+        if feedbackarr:
+            print("Inside morefilter")
+            temp_doc = []
+            abstracts_folder_name = self.get_corpus_folder(self.query)
+            for doc in rel_doc:
+                try:
+                    print("path: ",abstracts_folder_name+"/"+str(doc))
+                    rf = open(abstracts_folder_name+"/"+str(doc), 'r')
+                    content = self.preprocess(rf.read())
+                    for newterm in feedbackarr:
+                        if content.find(newterm):
+                            temp_doc.append(doc)
+                            print("doc: ",doc,newterm)
+                            break
+                finally:
+                    rf.close()
+            return temp_doc
+        else:
+            return rel_doc
 
     def preprocess(self,abstract):
         content = abstract.replace('\n', ' ')
@@ -41,25 +64,25 @@ class GoldenCorpus():
 
     def checkRelevance(self,abstract, genes):
         abs = self.preprocess(abstract)
-        # for gene in genes:
-        #     if gene and gene+" " in abs:
-        #         return True,gene
-        for row in range(0,genes.nrows):
-            for col in range(0,genes.ncols):
-                if row != 0 and col!=0 and col != 1 and col!=8 and col!=9 and col!=10 and col!=11 and col!=12 and genes.cell_value(row,col):
-                    if str(genes.cell_value(row,col))+" " in abs:
-                        return True,genes.cell_value(row,col) 
+        for gene in genes:
+            if gene and gene+" " in abs:
+                return True,gene
+        # for row in range(0,genes.nrows):
+        #     for col in range(0,genes.ncols):
+        #         if row != 0 and col!=0 and col != 1 and col!=8 and col!=9 and col!=10 and col!=11 and col!=12 and genes.cell_value(row,col):
+        #             if str(genes.cell_value(row,col))+" " in abs:
+        #                 return True,genes.cell_value(row,col) 
         
         return False,""
 
     def fetchData(self):
         print("Fetchdata called..")
         _pmids, self.mesh_terms = api.fetch_data(self.query,200)
-        print("pmid:----------------------------------> ",len(_pmids))
+        print("Total pmid got:----------------------------------> ",len(_pmids))
         if self.saveGoldenCorpus(_pmids):
-            return True
+            return True,self.mesh_terms
         else: 
-            return False
+            return False,self.mesh_terms
 
 
     def saveGoldenCorpus(self, _pmids):
@@ -96,44 +119,48 @@ class GoldenCorpus():
                         ids += str(pmid) + ","
                     data = api.get_abstract(ids)
                     self.split_abstracts(self.query, data)
-            else:
-                print("No data found!")
-                return False
-        
-            # check relevance and populate get rel_Docset
-            print("Download done.")
-            print("Relevant docs creating.......")
-            if os.path.exists("home/" + self.filepath):
-                # _filepointer = open(self.filepath,'r')
-                # _genefile = _filepointer.read().split('\n')
-                path = ("home/" + self.filepath)
-                wb = xlrd.open_workbook(path)
-                sheet = wb.sheet_by_index(0)
-
-                abstracts_folder_name = self.get_corpus_folder(self.query)
-                for _file in os.listdir(abstracts_folder_name):
-                    rf = open(abstracts_folder_name+"/"+_file, 'r')
-                    content = self.preprocess(rf.read())
-                    result,gene = self.checkRelevance(content,sheet)
-                    count = 0
-                    if result:
-                        count += 1
-                        # print("file: ",file)
-                        # print("gene found: -- > ", gene)
-                        self.rel_docs.append(int(_file))
-                realdoc = open("home/pmid.txt","w")
-                for element in self.rel_docs:
-                    realdoc.write('%d\n' % element)
-                realdoc.close()
-                print("Corpus done..")
+                print("Download done.")
                 return True
             else:
-                print("Genefile not found...")
+                print("No data found!")
                 return False
         else:
             print("Corpus exists.")
             return True
-        return False
+
+    def create_relevant_docs(self):
+        
+        print("Relevant docs creating.......")
+        if os.path.exists("home/" + self.filepath):
+            # For txt file type 
+            _filepointer = open("home/" + self.filepath,'r')
+            _genefile = _filepointer.read().split('\n')
+            # For xls file type
+            # path = ("home/" + self.filepath)
+            # wb = xlrd.open_workbook(path)
+            # _genefile = wb.sheet_by_index(0)
+
+            abstracts_folder_name = self.get_corpus_folder(self.query)
+            for _file in os.listdir(abstracts_folder_name):
+                # Must check if file exists later ------------------------------------
+                rf = open(abstracts_folder_name+"/"+_file, 'r')
+                content = self.preprocess(rf.read())
+                result,gene = self.checkRelevance(content,_genefile)
+                count = 0
+                if result:
+                    count += 1
+                    # print("file: ",file)
+                    # print("gene found: -- > ", gene)
+                    self.rel_docs.append(int(_file))
+            # Keep rel docs in a file for reuse 
+            realdoc = open("home/goldenpmid.txt","w")
+            for element in self.rel_docs:
+                realdoc.write('%d\n' % element)
+            realdoc.close()
+            print("Corpus done..")
+        else:
+            print("Genefile not found...")
+
     def split_abstracts(self,query, data):
 
         lines = xmltodict.parse(data)   

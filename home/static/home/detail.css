@@ -20,12 +20,18 @@ a:hover {
 .container {
     margin-left: 8%;
     margin-top: 2%;
+    display: flex;
 }
-.top-container {
-    height: 100px;
+.left-container{
+    flex: 2;
+    display: block;
+    flex-direction: column;
+}
+.left-top-container{
+
 }
 .form-container {
-    width: 50%;
+    width: 90%;
     height: 40px;
     border-radius: 2px;
     box-shadow: 0 2px 2px 0 rgba(0,0,0,0.16),0 0 0 1px rgba(0,0,0,0.08);
@@ -50,8 +56,9 @@ input {
 }
 
 .select-file {
-    display: flex;
     margin-top: 10px;
+    font-size: small;
+    display: none;
 }
 #filelabel {
     padding-top: 8px;
@@ -62,14 +69,11 @@ input {
     text-align: left;
 }
 
-.leftright-container{
-    display: flex;
+.left-middle-container{
+    margin-top: 50px;
 }
 
-.left-container {
-    flex: 2;
-    margin-top: 10px;
-    width: 50%;
+.left-bottom-container {
 }
 .middle-container {
     flex: 1;
