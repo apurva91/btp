@@ -37,13 +37,13 @@ class GoldenCorpus():
             abstracts_folder_name = self.get_corpus_folder(self.query)
             for doc in rel_doc:
                 try:
-                    print("path: ",abstracts_folder_name+"/"+str(doc))
+                    # print("path: ",abstracts_folder_name+"/"+str(doc))
                     rf = open(abstracts_folder_name+"/"+str(doc), 'r')
                     content = self.preprocess(rf.read())
                     for newterm in feedbackarr:
                         if content.find(newterm):
                             temp_doc.append(doc)
-                            print("doc: ",doc,newterm)
+                            # print("doc: ",doc,newterm)
                             break
                 finally:
                     rf.close()

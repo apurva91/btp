@@ -12,5 +12,6 @@ urlpatterns = [
     path('genecloud/<int:json_no>/', views.genecloud, name='genecloud'),
     path('meshcloud/<int:json_no>/', views.meshcloud, name='meshcloud'),
     path('generelation/<int:json_no>/', views.generelation, name='generelation'),
+    path('entities/<int:json_no>/', views.entities, name='entities'),
     path('user-feedback/', views.feedback, name='feedback'),
 ]

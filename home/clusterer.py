@@ -22,10 +22,12 @@ class Clusterer:
 		raw_data = []
 		self.data_folder_name = dataFolder+"/"
 		for filename in os.listdir(self.data_folder_name):
-		    f = open(self.data_folder_name+filename, 'r')
-		    json_object = json.load(f)
-		    f.close()
-		    raw_data.append(json_object)
+			try:
+				with open(self.data_folder_name+filename, 'r') as f:
+					json_object = json.load(f)
+					raw_data.append(json_object)
+			except FileNotFoundError:
+				continue
 		    
 		print('Number of Cluster Points -------> ')
 		print(len(raw_data))
@@ -35,16 +37,16 @@ class Clusterer:
 		self.related_docs = relDocsSet
 		self.hyper = hyper
 
-	# def get_final_set(self):
-	# 	return self.final_set
-
 	def cluster(self):
-		data_abstract = [clusterpoint["abstracts"] for clusterpoint in self.cluster_data]
-		data_title = [clusterpoint["titles"] for clusterpoint in self.cluster_data]
-		data_query_label = [clusterpoint["query"] for clusterpoint in self.cluster_data]
-		data_query_id = [clusterpoint["queryId"] for clusterpoint in self.cluster_data]
+		data_abstract = [json_data["abstracts"] for json_data in self.cluster_data] # contains array of array of abstracts
+		data_title = [json_data["titles"] for json_data in self.cluster_data]
+		data_query = [json_data["query"] for json_data in self.cluster_data]
+		data_query_id = [json_data["queryId"] for json_data in self.cluster_data]
 
-		# print(data_abstract)
+		# Convert array of array of abstracts to array of abstracts 
+		# by merging all abstracts of a json file into single string
+		# Now no.of abstracts will be same as no.of json file we have.
+		# You can think we are clustering json files by clustering their abstructs
 		final_abstracts = []
 		for i in range(0,len(data_abstract)):
 			abstracts = ""
@@ -52,12 +54,19 @@ class Clusterer:
 				abstracts = abstracts+data_title[i][j]+data_abstract[i][j]
 			final_abstracts.append(abstracts)
 		
+		# Each string abstract is a point for our cluster algo
+		# We convert this point into feature vector for the algo. We will have 'n' vector for 'n' json file.
+		# Each vector consists of word from corresponding abstract string.
+		# Then all words are replaced with the TfIdf frequency. 
+		# So finaly vector will contain frequency value rather than word itself.
+		# Then normalize the values
+
 		# Perform an IDF normalization on the output of HashingVectorizer
 		hasher = HashingVectorizer(n_features=1000, stop_words='english', norm=None, binary=False)
 		vectorizer = make_pipeline(hasher, TfidfTransformer())
-		X = vectorizer.fit_transform(final_abstracts)
+		X = vectorizer.fit_transform(final_abstracts) # X is an array of feature vectors which will be input to kmeans algo
 		print ("n_samples: %d, n_features: %d" % X.shape)
-		# print(data_query_label)
+		# print(data_query)
 		# print(X)
 
 		# K-Means or DBSCAN
@@ -67,28 +76,29 @@ class Clusterer:
 			t0 = time()
 			km.fit(X)
 			print("done in %0.3fs" % (time() - t0))
-			# print(len(set(km.labels_)))
 		else:
 			km = DBSCAN(eps=float(self.hyper), min_samples=10).fit(X)
 			num_clusters = len(set(km.labels_))
-		# labels contains cluster number for each json (position wise) i.e. cluster_labels[0] contains cluster
-		# number for 0-th json and so on 
+
+		# km.labels_ contains cluster number for each feature vector/json (position wise) 
+		# i.e. km_labels_[0] contains cluster number for 0-th feature vector/json and so on 
 		cluster_labels = km.labels_
 		cluster_centers = km.cluster_centers_
 		print("cluster labels: ",cluster_labels)
-		query_clusters = []
-		query_clusters_pmids = []
 
+		# query_clusters is a 2d array which contains cluster wise joson numbers
+		# query_clusters_pmids is a 2d set which contains cluster wise pmids
+		query_clusters = []
+		query_clusters_pmids = [] # used for computing socre for cluster by taking intersection with golden corpus
 		for i in range(0,num_clusters):
 		    temp = []
 		    tempset = set()
 		    query_clusters_pmids.append(tempset)
 		    query_clusters.append(temp)
-		# Each row(cluster 0 to 8) will contain its corresponding json nos
+		# Each row(cluster 0 to k-1) will contain its corresponding json nos
 		for i in range(0,len(cluster_labels)):
-			query_clusters[cluster_labels[i]].append(i+1)
+			query_clusters[cluster_labels[i]].append(i+1) # i+1 is json number i-th label
 			pmids = self.cluster_data[i]["articleIds"]
-			# print("pmids: ", pmids)
 			for pmid in pmids:
 				if pmid:
 					query_clusters_pmids[cluster_labels[i]].add(int(pmid))
@@ -103,25 +113,29 @@ class Clusterer:
 		# random.shuffle(relevant_docs)
 
 		# learning vs testing split of Golden corpus 
-
 		training_cnt = int(1.0*len(relevant_docs))
 		relevant_known = set(relevant_docs[:training_cnt])
 		# relevant_blind = set(relevant_docs[training_cnt:])
 		
+		# Computing cluster score for each cluster by taking intersection between golden corpus pmids and cluster pmids
 		cluster_score = [1.0 + float(len(relevant_known.intersection(cluster_pmids))/(len(cluster_pmids) + 1)) for cluster_pmids in query_clusters_pmids]
-		
 		print(cluster_score)
 		cluster_score_relative = [float(score/(1.0 + max(cluster_score))) for score in cluster_score]
 		print(cluster_score_relative)
+
 		# blind_intersection = [len(relevant_blind.intersection(cluster_pmids)) for cluster_pmids in query_clusters_pmids]
 		# print ("Cluster ID\tRelevance Score\tBlind Intersection")
 		# for i in range(0,num_clusters):
 		#     print (str(i) + "\t\t" + str(cluster_score_relative[i]) + "\t\t" + str(blind_intersection[i]))
 
-		# Orderdict with duplicate keys(i.e. cluster score)
+		# Sort cluster by cluster score
+		# But multiple cluster might have same score
+		# So we keep a dictionary with score as key and array of cluster number as value
+		
+		thresh = 0
 		clus_dict = OrderedDict()
 		for i in range(0,num_clusters):
-			if cluster_score_relative[i] > 0.0:
+			if cluster_score_relative[i] > thresh: 
 				try:
 					clus_dict[cluster_score_relative[i]].append(i)
 				except KeyError:
@@ -130,45 +144,51 @@ class Clusterer:
 		sorted_dict_by_score = sorted(clus_dict.items(), reverse=True)
 		print(sorted_dict_by_score)
 		
-		optimized_query = []
-		optimized_query_ids = []
+		# top_cluster_query_ids is a unordered dict with key as cluster no. and value as array of json_no. 
+		# top_cluster_query is a unordered dict with key as cluster no. and value as array of query corresponding to json_no
+		top_cluster_query_ids = OrderedDict()
+		top_cluster_query = OrderedDict()
 		done = 0
-		j = 0
 		minp = sys.float_info.max
-		# representative contains best mesh query
-		representative = None
 		# representative_id contains best json number
 		representative_id = 0
-
+		# representative contains query of best json number
+		representative = None
+		
+		# Following code finds representative json from best(1st) cluster 
+		# and populate top_cluster_query , top_cluster_query_ids 2d arrays 
 		for _score , _clus_no_arr in sorted_dict_by_score:
+			# Making current dict element has value (i.e. array of cluster no.)
 			if len(_clus_no_arr) > 0:
 				for _clus_no in _clus_no_arr:
-					# Making sure cluster has atleast one query in it
+					# Making sure cluster has atleast one json number in it
 					if len(query_clusters[_clus_no]) > 0:
-						print("clusno: ",_clus_no)
-						optimized_query.append([])
-						optimized_query_ids.append([])
+						top_cluster_query[_clus_no] = []
+						top_cluster_query_ids[_clus_no] = []
 						if not done:
 							print("Cluster id: ",_clus_no)
 							print('Number of Abstracts in Best Cluster: {}',len(query_clusters_pmids[_clus_no]))
-						# Finding representative for a cluster by calculating euclidian distance between each json 
-						# with cluster center of a cluster
+						# Finding representative for best(1st) cluster by calculating euclidian distance between each feature  
+						# vector with cluster center of the cluster.
 						for json_no in query_clusters[_clus_no]:
 							# Only for first cluster i.e best cluster
 							if not done:
+								# json_no starts with 1 but X starts with 0 so we take [json_no - 1]
+								# X[json_no - 1] is frequency vector for json file json_no
 								dist = distance.euclidean(cluster_centers[_clus_no], X[json_no - 1].toarray())
 								if dist < minp:
 									minp = dist
-									representative = data_query_label[json_no-1]
+									representative = data_query[json_no-1]
 									representative_id = json_no
 									print("----------------------------------------",json_no)
-							optimized_query_ids[j].append(json_no)
-							optimized_query[j].append(data_query_label[json_no-1])
-						j += 1
+							top_cluster_query_ids[_clus_no].append(json_no)
+							top_cluster_query[_clus_no].append(data_query[json_no-1])
 						done = 1
 
 		print("representative: ", representative)
 		print("id: ", representative_id)
+
+
 		# open given gene list
 		# path = ("home/gene_list.xlsx")
 		# wb = xlrd.open_workbook(path)
@@ -176,7 +196,7 @@ class Clusterer:
 		# mydata = ""
 		# meshObj = {}
 		# geneObj={}
-		# for name in optimized_query_ids[0]:
+		# for name in top_cluster_query_ids[0]:
 		# 	# open a file name.json
 		# 	f = open(self.data_folder_name + str(name)+".json", 'r')
 		# 	json_object = json.load(f)
@@ -214,4 +234,4 @@ class Clusterer:
 			# print (w, meshObj[w])
 
 		# print(representative)
-		return representative_id,representative,optimized_query_ids, optimized_query
+		return representative_id,representative,top_cluster_query_ids, top_cluster_query

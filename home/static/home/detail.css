@@ -74,6 +74,7 @@ input {
 }
 
 .left-bottom-container {
+    margin-left: 30%;
 }
 .middle-container {
     flex: 1;

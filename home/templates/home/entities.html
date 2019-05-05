@@ -1,0 +1,145 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Entities Recognition</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'home/entities.css' %}">
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
+    <script>
+        // handle radio button click
+        $(document).ready(function(){
+            console.log("clicked ");
+            // handle protein 
+            $("input[name$='p-same']").click(function(){
+                let val = $(this).val();
+                $("div.same-class").hide();
+                $("#option" + val).show();
+            });
+        }); 
+        function union(data,flag){
+            if(flag == 1){
+                let f = document.getElementById('option1');
+                let text = document.getElementById('option2');
+                if(f.files.length > 0){
+                    let file = f.files[0];
+                    let mytext;
+                    // Read file 
+                    let reader = new FileReader();
+                    reader.addEventListener('load', function (e) {
+                        mytext = e.target.result;
+                        let wordarr = mytext.split(' ');
+                        console.log(wordarr);
+                        data.union(wordarr); 
+                        let tarea = document.getElementById('protein-name-area');
+                        if(tarea){
+                            tarea.textContent = data;
+                        }
+                    });
+                    
+                    reader.readAsBinaryString(file);
+                }
+                else if(text){
+
+                }
+                else{
+                    alert("Please select file of enter data !!");
+                }
+            }
+            else if(flag == 2){
+
+            }
+            else if(flag == 3){
+
+            }
+        }   
+        function intersection(data,flag){
+            if(flag == 1){
+
+            }
+            else if(flag == 2){
+
+            }
+            else if(flag == 3){
+
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        {% if disese %}
+        <div><h2>Entity: disese</h2></div>
+        <div class="disese">
+            <div class="container-left">
+                <p>{{disese}}</p>
+            </div>
+            <div class="container-middle"><p>Hello middle</p></div>
+            <div class="container-right"><p>Hi right</p></div>
+        </div>
+        {% endif %}
+        {% if protein %}
+        <div><h2>Entity: protein</h2></div>
+        <div class="protein">
+            <div class="container-left">
+                    <p>{{protein}}</p>
+                </div>
+                <div class="container-middle">
+                    <h3>Set operations:</h3>
+                    <button onclick="union('{{protein}}',1)">Union</button>
+                    <button onclick="intersection('{{protein}}',1)">Intersection</button>
+                    <button onclick="leftright_difference('{{protein}}',1)">Left - Right</button>
+                    <button onclick="rightleft_difference('{{protein}}',1)">Right - Left</button>
+                </div>
+                <div class="container-right">
+                    <div style="display: flex">
+                        <div><input type="radio" name="p-same" value="1"> Protein file</div><br>
+                        <div>OR</div>
+                        <div><input type="radio" name="p-same" value="2"> Protein names</div>
+                    </div>
+                    <div id="option1" class="same-class">
+                        <label for="protein-file" id="filelabel">Choose a Protein file:</label>
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="file" id="protein-file" name="proteinfile" accept="text">
+                    </div>	
+                    <div id="option2" class="same-class">
+                        <label for="protein-name">Enter protein names: </label>
+                        <textarea style="width: 95%; height: 65px; resize: none" name="protein-name" id="protein-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="protein-result">
+                
+            </div>
+        {% endif %}
+        {% if rna %}
+        <div><h2>Entity: RNA</h2></div>
+        <div class="rna">
+            <div class="container-left">
+                    <p>{{rna}}</p>
+                </div>
+                <div class="container-middle"><p>Hello middle</p></div>
+                <div class="container-right"><p>Hi right</p></div>
+            </div>
+            <div class="rna-result">
+                
+            </div>
+        {% endif %}
+        {% if dna %}
+        <div><h2>Entity: DNA</h2></div>
+        <div class="dna">
+            <div class="container-left">
+                    <p>{{dna}}</p>
+                </div>
+                <div class="container-middle"><p>Hello middle</p></div>
+                <div class="container-right"><p>Hi right</p></div>
+            </div>
+            <div class="dna-result">
+                
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

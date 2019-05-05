@@ -103,13 +103,14 @@ class PostProcessing():
             store[value] = 1
         return
 
-
     def gene_cloud(self,term_id,gene_file_name,search_term):
         print("Gene cloud called..")
         file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'
-        f = open(file_name, 'r')
-        json_object = json.load(f)
-        f.close()
+        try:
+            with open(file_name, 'r') as f:
+                json_object = json.load(f)
+        except FileNotFoundError:
+            return 0,None
 
         data_abstract = json_object["abstracts"]
         data_title = json_object["titles"]
@@ -209,14 +210,16 @@ class PostProcessing():
         root["pmids"] = 0
         root["children"] = children
         # print(root)
-        return root
+        return 1,root
 
     def mesh_cloud(self,term_id,search_term):
         print("Mesh cloud called..")
         file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'
-        f = open(file_name, 'r')
-        json_object = json.load(f)
-        f.close()
+        try:
+            with open(file_name, 'r') as f:
+                json_object = json.load(f)
+        except FileNotFoundError:
+            return 0,None
 
         mesh_terms_matrix = json_object["meshterms"]
         
@@ -239,13 +242,13 @@ class PostProcessing():
         root["value"] = 1000
         root["children"] = children
         # print(root)
-        return root
+        return 1,root
 
     def generelation(self,term_id,gene_file_name,search_term):
         file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'
-        f = open(file_name, 'r')
-        json_object = json.load(f)
-        f.close()
+        
+        with open(file_name, 'r') as f:
+            json_object = json.load(f)
 
         data_abstract = json_object["abstracts"]
         data_title = json_object["titles"]
@@ -270,4 +273,38 @@ class PostProcessing():
         gene_dict = {}
         for _i in range(0, len(genefile_arr)):
             new_list = []
-            
+
+    def get_entities(self,query,json_arr):
+        if len(json_arr) < 0:
+            return 0,None,None,None,None
+        else:
+            abstracts = []
+            for json_id in json_arr:
+                try:
+                    path = "home/data_folder/"+query+"/"+str(json_id)+'.json'
+                    with open(path,'r') as f:
+                        json_object = json.load(f)
+                        abstracts.extend(json_object["abstracts"])
+                except FileNotFoundError:
+                    continue
+            if len(abstracts) > 0:
+                # call entity recognition model
+                disese = ["hello"]
+                protein = ["hi"]
+                rna = ["hehe"]
+                dna = ["huhu"]
+                return 1, disese, protein,rna,dna
+            else:
+                return 0,None,None,None,None
+                            
+
+
+
+
+
+
+
+
+
+
+

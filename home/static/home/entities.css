@@ -1,0 +1,13 @@
+
+.disese, .protein, .rna, .dna {
+    display: flex;
+}
+.container-left {
+    flex: 2;
+}
+.container-middle {
+    flex: 1;
+}
+.container-right {
+    flex: 2;
+}
