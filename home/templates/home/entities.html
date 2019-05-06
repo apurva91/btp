@@ -1,145 +1,485 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Entities Recognition</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'home/entities.css' %}">
-    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
-    <script>
-        // handle radio button click
-        $(document).ready(function(){
-            console.log("clicked ");
-            // handle protein 
-            $("input[name$='p-same']").click(function(){
-                let val = $(this).val();
-                $("div.same-class").hide();
-                $("#option" + val).show();
-            });
-        }); 
-        function union(data,flag){
-            if(flag == 1){
-                let f = document.getElementById('option1');
-                let text = document.getElementById('option2');
-                if(f.files.length > 0){
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>Entities Recognition</title>
+        <link rel="stylesheet" type="text/css" href="{% static 'home/entities.css' %}">
+        <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
+        <script>
+            // handle radio button click
+            $(document).ready(function(){
+                // handle protein 
+                $("input[name$='p-same']").click(function(){
+                    console.log("clicked ");
+                    let val = $(this).val();
+                    $("div.protein-class").hide();
+                    $("#protein" + val).show();
+                });
+                // handle rna 
+                $("input[name$='r-same']").click(function(){
+                    console.log("clicked ");
+                    let val = $(this).val();
+                    $("div.rna-class").hide();
+                    $("#rna" + val).show();
+                });
+                // handle dna 
+                $("input[name$='d-same']").click(function(){
+                    console.log("clicked ");
+                    let val = $(this).val();
+                    $("div.dna-class").hide();
+                    $("#dna" + val).show();
+                });
+            }); 
+            function union(flag){
+                let data = JSON.parse(document.getElementById('mydata').textContent);
+                disese = data.disese;
+                protein = data.protein;
+                rna = data.rna;
+                dna = data.dna;
+                let leftdata;
+                let tarea;
+                let f;
+                let text;
+                let filechecked;
+                if(flag == 1){ // for protein    
+                    f = document.getElementById('protein-file');
+                    text = document.getElementById('protein-name-area').value;
+                    if(document.getElementById("p-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-protein-id');
+                    leftdata = protein;
+                    console.log(text);
+                    console.log(leftdata);
+                }
+                else if(flag == 2){ // for RNA
+                    f = document.getElementById('rna-file');
+                    text = document.getElementById('rna-name-area').value;
+                    if(document.getElementById("r-radio-file").checked){
+                        filechecked = 1;
+                    }
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-rna-id');
+                    leftdata = rna;
+                }
+                else if(flag == 3){
+                    f = document.getElementById('dna-file');
+                    text = document.getElementById('dna-name-area').value;
+                    if(document.getElementById("d-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-dna-id');
+                    leftdata = dna;
+                }
+                if(f.files.length > 0 && filechecked){
+                    console.log("file selected");
                     let file = f.files[0];
                     let mytext;
                     // Read file 
                     let reader = new FileReader();
                     reader.addEventListener('load', function (e) {
                         mytext = e.target.result;
-                        let wordarr = mytext.split(' ');
-                        console.log(wordarr);
-                        data.union(wordarr); 
-                        let tarea = document.getElementById('protein-name-area');
+                        let wordarr = mytext.split(/[ ,]+/);
+                        wordarr = wordarr.map(function(x){ return x.toUpperCase() })
+                        leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                        let data_union = [...new Set([...leftdata, ...wordarr])]; // ... for creating array form set
                         if(tarea){
-                            tarea.textContent = data;
+                            tarea.textContent = data_union.map(function(x){ return x.toLowerCase() });
                         }
                     });
                     
                     reader.readAsBinaryString(file);
                 }
                 else if(text){
-
+                    let mytext = text.split(/[ ,]+/);
+                    mytext = mytext.map(function(x){ return x.toUpperCase() }) // .map is array function
+                    leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                    let data_union = [...new Set([...leftdata, ...mytext])]; 
+                    if(tarea){
+                        tarea.textContent = data_union;
+                    }
+                }
+                else{
+                    alert("Please select file of enter data !!");
+                }
+            }   
+            function intersection(flag){
+                let data = JSON.parse(document.getElementById('mydata').textContent);
+                disese = data.disese;
+                protein = data.protein;
+                rna = data.rna;
+                dna = data.dna;
+                let leftdata;
+                let tarea;
+                let f;
+                let text;
+                let filechecked;
+                if(flag == 1){ // for protein    
+                    f = document.getElementById('protein-file');
+                    text = document.getElementById('protein-name-area').value;
+                    if(document.getElementById("p-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-protein-id');
+                    leftdata = protein;
+                    console.log(text);
+                    console.log(leftdata);
+                }
+                else if(flag == 2){ // for RNA
+                    f = document.getElementById('rna-file');
+                    text = document.getElementById('rna-name-area').value;
+                    if(document.getElementById("r-radio-file").checked){
+                        filechecked = 1;
+                    }
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-rna-id');
+                    leftdata = rna;
+                }
+                else if(flag == 3){
+                    f = document.getElementById('dna-file');
+                    text = document.getElementById('dna-name-area').value;
+                    if(document.getElementById("d-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-dna-id');
+                    leftdata = dna;
+                }
+                if(f.files.length > 0 && filechecked){
+                    console.log("file selected");
+                    let file = f.files[0];
+                    let mytext;
+                    // Read file 
+                    let reader = new FileReader();
+                    reader.addEventListener('load', function (e) {
+                        mytext = e.target.result;
+                        let wordarr = mytext.split(/[ ,]+/);
+                        wordarr = wordarr.map(function(x){ return x.toUpperCase() })
+                        let setB = new Set(wordarr);
+                        leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                        let data_intersection = [...new Set(leftdata)].filter(x => setB.has(x));
+                        if(tarea){
+                            tarea.textContent = data_intersection;
+                        }
+                    });
+                    
+                    reader.readAsBinaryString(file);
+                }
+                else if(text){
+                    let mytext = text.split(/[ ,]+/);
+                    mytext = mytext.map(function(x){ return x.toUpperCase() }) // .map is array function
+                    let setB = new Set(mytext);
+                    leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                    let data_intersection = [...new Set(leftdata)].filter(x => setB.has(x)); // .has is set function
+                    if(tarea){
+                        tarea.textContent = data_intersection;
+                    }
+                }
+                else{
+                    alert("Please select file of enter data !!");
+                }    
+            }
+            function leftright_difference(flag){
+                let data = JSON.parse(document.getElementById('mydata').textContent);
+                disese = data.disese;
+                protein = data.protein;
+                rna = data.rna;
+                dna = data.dna;
+                let leftdata;
+                let tarea;
+                let f;
+                let text;
+                let filechecked;
+                if(flag == 1){ // for protein    
+                    f = document.getElementById('protein-file');
+                    text = document.getElementById('protein-name-area').value;
+                    if(document.getElementById("p-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-protein-id');
+                    leftdata = protein;
+                }
+                else if(flag == 2){ // for RNA
+                    f = document.getElementById('rna-file');
+                    text = document.getElementById('rna-name-area').value;
+                    if(document.getElementById("r-radio-file").checked){
+                        filechecked = 1;
+                    }
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-rna-id');
+                    leftdata = rna;
+                }
+                else if(flag == 3){
+                    f = document.getElementById('dna-file');
+                    text = document.getElementById('dna-name-area').value;
+                    if(document.getElementById("d-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-dna-id');
+                    leftdata = dna;
+                }
+                if(f.files.length > 0 && filechecked){
+                    console.log("file selected");
+                    let file = f.files[0];
+                    let mytext;
+                    // Read file 
+                    let reader = new FileReader();
+                    reader.addEventListener('load', function (e) {
+                        mytext = e.target.result;
+                        let wordarr = mytext.split(/[ ,]+/);
+                        wordarr = wordarr.map(function(x){ return x.toUpperCase() })
+                        leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                        wordarr = new Set(wordarr);
+                        leftdata = new Set(leftdata);
+                        let leftrightdiff = [...new Set(leftdata)].filter(x => !wordarr.has(x)); // ... for creating array form set
+                        if(tarea){
+                            tarea.textContent = leftrightdiff.map(function(x){ return x.toLowerCase() });
+                        }
+                    });
+                    
+                    reader.readAsBinaryString(file);
+                }
+                else if(text){
+                    let mytext = text.split(/[ ,]+/);
+                    mytext = mytext.map(function(x){ return x.toUpperCase() }) // .map is array function
+                    leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                    mytext = new Set(mytext);
+                    leftdata = new Set(leftdata);
+                    let leftrightdiff = [...new Set(leftdata)].filter(x => !mytext.has(x)); 
+                    if(tarea){
+                        tarea.textContent = leftrightdiff.map(function(x){ return x.toLowerCase() });
+                    }
+                }
+                else{
+                    alert("Please select file of enter data !!");
+                }
+            } 
+            function rightleft_difference(flag){
+                let data = JSON.parse(document.getElementById('mydata').textContent);
+                disese = data.disese;
+                protein = data.protein;
+                rna = data.rna;
+                dna = data.dna;
+                let leftdata;
+                let tarea;
+                let f;
+                let text;
+                let filechecked;
+                if(flag == 1){ // for protein    
+                    f = document.getElementById('protein-file');
+                    text = document.getElementById('protein-name-area').value;
+                    if(document.getElementById("p-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-protein-id');
+                    leftdata = protein;
+                }
+                else if(flag == 2){ // for RNA
+                    f = document.getElementById('rna-file');
+                    text = document.getElementById('rna-name-area').value;
+                    if(document.getElementById("r-radio-file").checked){
+                        filechecked = 1;
+                    }
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-rna-id');
+                    leftdata = rna;
+                }
+                else if(flag == 3){
+                    f = document.getElementById('dna-file');
+                    text = document.getElementById('dna-name-area').value;
+                    if(document.getElementById("d-radio-file").checked)
+                        filechecked = 1;
+                    else
+                        filechecked = 0;
+                    tarea = document.getElementById('resulted-dna-id');
+                    leftdata = dna;
+                }
+                if(f.files.length > 0 && filechecked){
+                    console.log("file selected");
+                    let file = f.files[0];
+                    let mytext;
+                    // Read file 
+                    let reader = new FileReader();
+                    reader.addEventListener('load', function (e) {
+                        mytext = e.target.result;
+                        let wordarr = mytext.split(/[ ,]+/);
+                        wordarr = wordarr.map(function(x){ return x.toUpperCase() })
+                        leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                        wordarr = new Set(wordarr);
+                        leftdata = new Set(leftdata);
+                        let rightleftdiff = [...new Set(wordarr)].filter(x => !leftdata.has(x)); // ... for creating array form set
+                        if(tarea){
+                            tarea.textContent = rightleftdiff.map(function(x){ return x.toLowerCase() });
+                        }
+                    });
+                    
+                    reader.readAsBinaryString(file);
+                }
+                else if(text){
+                    let mytext = text.split(/[ ,]+/);
+                    mytext = mytext.map(function(x){ return x.toUpperCase() }) // .map is array function
+                    leftdata = leftdata.map(function(x){ return x.toUpperCase() })
+                    mytext = new Set(mytext);
+                    leftdata = new Set(leftdata);
+                    let rightleftdiff = [...new Set(mytext)].filter(x => !leftdata.has(x)); 
+                    if(tarea){
+                        tarea.textContent = rightleftdiff.map(function(x){ return x.toLowerCase() });
+                    }
                 }
                 else{
                     alert("Please select file of enter data !!");
                 }
             }
-            else if(flag == 2){
-
-            }
-            else if(flag == 3){
-
-            }
-        }   
-        function intersection(data,flag){
-            if(flag == 1){
-
-            }
-            else if(flag == 2){
-
-            }
-            else if(flag == 3){
-
-            }
-        }
-    </script>
-</head>
-<body>
-    <div class="container">
-        {% if disese %}
-        <div><h2>Entity: disese</h2></div>
-        <div class="disese">
-            <div class="container-left">
-                <p>{{disese}}</p>
-            </div>
-            <div class="container-middle"><p>Hello middle</p></div>
-            <div class="container-right"><p>Hi right</p></div>
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            {% if entities %}
+                {{ entities|json_script:"mydata"}}
+                {% if entities.disese %}
+                <div><h1>Entity: disese</h1></div>
+                <div class="disese">
+                    <div class="container-left">
+                        <h3>Cluster disese set</h3>
+                        {% for disese in entities.disese %}
+                            <p>{{disese}}, </p>
+                        {% endfor %}
+                    </div>
+                    <div class="container-middle"></div>
+                    <div style="flex: 2"></div>
+                </div>
+                {% endif %}
+                {% if entities.protein %}
+                <div><h1>Entity: protein</h1></div>
+                <div class="protein">
+                    <div class="container-left">
+                        <h3>Cluster protein set</h3>
+                        {% for protein in entities.protein %}
+                            <p>{{protein}}, </p>
+                        {% endfor %}
+                    </div>
+                    <div class="container-middle">
+                        <h3>Set operations between cluster and user protein set</h3>
+                        <div style="display: flex; flex-direction: column">
+                            <button onclick="union(1)" class="operation">Union</button>
+                            <button onclick="intersection(1)" class="operation">Intersection</button>
+                            <button onclick="leftright_difference(1)" class="operation">Left - Right</button>
+                            <button onclick="rightleft_difference(1)" class="operation">Right - Left</button>
+                        </div>
+                    </div>
+                    <div class="container-right">
+                        <h3>Your protein set</h3>
+                        <div style="display: flex">
+                            <div><input id="p-radio-file" type="radio" name="p-same" value="1"> Protein file</div><br>
+                            <div><input id="p-radio-text" type="radio" name="p-same" value="2"> Protein names</div>
+                        </div>
+                        <div id="protein1" class="protein-class">
+                            <h3>Choose a Protein file:</h3>
+                            <input type="file" id="protein-file" name="proteinfile" accept="text">
+                        </div>	
+                        <div id="protein2" class="protein-class">
+                            <h3>Enter protein names: </h3>
+                            <textarea style="width: 95%; height: 65px; resize: none" name="protein-name" id="protein-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="protein-result">
+                    <h3>Resulted protein names: </h3>
+                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-protein-name" id="resulted-protein-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                </div>
+                {% endif %}
+                {% if entities.rna %}
+                <div><h1>Entity: RNA</h1></div>
+                <div class="rna">
+                    <div class="container-left">
+                        <h3>Cluster RNA set</h3>
+                        {% for rna in entities.rna %}
+                            <p>{{rna}}, </p>
+                        {% endfor %}
+                    </div>
+                    <div class="container-middle">
+                        <h3>Set operations between cluster and user RNA set</h3>
+                        <div style="display: flex; flex-direction: column">
+                            <button onclick="union(2)" class="operation">Union</button>
+                            <button onclick="intersection(2)" class="operation">Intersection</button>
+                            <button onclick="leftright_difference(2)" class="operation">Left - Right</button>
+                            <button onclick="rightleft_difference(2)" class="operation">Right - Left</button>
+                        </div>
+                    </div>
+                    <div class="container-right">
+                        <h3>Your RNA set</h3>
+                        <div style="display: flex">
+                            <div><input id="r-radio-file" type="radio" name="r-same" value="1"> RNA file</div><br>
+                            <div><input id="r-radio-text" type="radio" name="r-same" value="2"> RNA names</div>
+                        </div>
+                        <div id="rna1" class="rna-class">
+                            <h3>Choose a RNA file:</h3>
+                            <input type="file" id="rna-file" name="rnafile" accept="text">
+                        </div>	
+                        <div id="rna2" class="rna-class">
+                            <h3>Enter RNA names: </h3>
+                            <textarea style="width: 95%; height: 65px; resize: none" name="rna-name" id="rna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="rna-result">
+                    <h3>Resulted RNA names: </h3>
+                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-rna-name" id="resulted-rna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                </div>
+                {% endif %}
+                {% if entities.dna %}
+                <div><h1>Entity: DNA</h1></div>
+                <div class="dna">
+                    <div class="container-left">
+                        <h3>Cluster DNA set</h3>
+                        {% for dna in entities.dna %}
+                            <p>{{dna}}, </p>
+                        {% endfor %}
+                    </div>
+                    <div class="container-middle">
+                        <h3>Set operations between cluster and user DNA set</h3>
+                        <div style="display: flex; flex-direction: column">
+                            <button onclick="union(3)" class="operation">Union</button>
+                            <button onclick="intersection(3)" class="operation">Intersection</button>
+                            <button onclick="leftright_difference(3)" class="operation">Left - Right</button>
+                            <button onclick="rightleft_difference(3)" class="operation">Right - Left</button>
+                        </div>
+                    </div>
+                    <div class="container-right">
+                        <h3>Your DNA set</h3>
+                        <div style="display: flex">
+                            <div><input id="d-radio-file" type="radio" name="d-same" value="1"> DNA file</div><br>
+                            <div><input id="d-radio-text" type="radio" name="d-same" value="2"> DNA names</div>
+                        </div>
+                        <div id="dna1" class="dna-class">
+                            <h3>Choose a DNA file:</h3>
+                            <input type="file" id="dna-file" name="dnafile" accept="text">
+                        </div>	
+                        <div id="dna2" class="dna-class">
+                            <h3>Enter DNA names: </h3>
+                            <textarea style="width: 95%; height: 65px; resize: none" name="dna-name" id="dna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="dna-result">
+                    <h3>Resulted DNA names: </h3>
+                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-dna-name" id="resulted-dna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                </div>
+                {% endif %}
+            {% endif %}
         </div>
-        {% endif %}
-        {% if protein %}
-        <div><h2>Entity: protein</h2></div>
-        <div class="protein">
-            <div class="container-left">
-                    <p>{{protein}}</p>
-                </div>
-                <div class="container-middle">
-                    <h3>Set operations:</h3>
-                    <button onclick="union('{{protein}}',1)">Union</button>
-                    <button onclick="intersection('{{protein}}',1)">Intersection</button>
-                    <button onclick="leftright_difference('{{protein}}',1)">Left - Right</button>
-                    <button onclick="rightleft_difference('{{protein}}',1)">Right - Left</button>
-                </div>
-                <div class="container-right">
-                    <div style="display: flex">
-                        <div><input type="radio" name="p-same" value="1"> Protein file</div><br>
-                        <div>OR</div>
-                        <div><input type="radio" name="p-same" value="2"> Protein names</div>
-                    </div>
-                    <div id="option1" class="same-class">
-                        <label for="protein-file" id="filelabel">Choose a Protein file:</label>
-                        &nbsp;&nbsp;&nbsp;
-                        <input type="file" id="protein-file" name="proteinfile" accept="text">
-                    </div>	
-                    <div id="option2" class="same-class">
-                        <label for="protein-name">Enter protein names: </label>
-                        <textarea style="width: 95%; height: 65px; resize: none" name="protein-name" id="protein-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="protein-result">
-                
-            </div>
-        {% endif %}
-        {% if rna %}
-        <div><h2>Entity: RNA</h2></div>
-        <div class="rna">
-            <div class="container-left">
-                    <p>{{rna}}</p>
-                </div>
-                <div class="container-middle"><p>Hello middle</p></div>
-                <div class="container-right"><p>Hi right</p></div>
-            </div>
-            <div class="rna-result">
-                
-            </div>
-        {% endif %}
-        {% if dna %}
-        <div><h2>Entity: DNA</h2></div>
-        <div class="dna">
-            <div class="container-left">
-                    <p>{{dna}}</p>
-                </div>
-                <div class="container-middle"><p>Hello middle</p></div>
-                <div class="container-right"><p>Hi right</p></div>
-            </div>
-            <div class="dna-result">
-                
-            </div>
-        {% endif %}
-    </div>
-</body>
+    </body>
 </html>

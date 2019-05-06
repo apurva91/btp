@@ -276,7 +276,7 @@ class PostProcessing():
 
     def get_entities(self,query,json_arr):
         if len(json_arr) < 0:
-            return 0,None,None,None,None
+            return 0,None
         else:
             abstracts = []
             for json_id in json_arr:
@@ -288,14 +288,21 @@ class PostProcessing():
                 except FileNotFoundError:
                     continue
             if len(abstracts) > 0:
-                # call entity recognition model
+                # call entity recognition model here
+
                 disese = ["hello"]
                 protein = ["hi"]
                 rna = ["hehe"]
                 dna = ["huhu"]
-                return 1, disese, protein,rna,dna
+                
+                entities = {}
+                entities["disese"] = disese
+                entities["protein"] = protein
+                entities["rna"] = rna
+                entities["dna"] = dna
+                return 1, entities
             else:
-                return 0,None,None,None,None
+                return 0,None
                             
 
 

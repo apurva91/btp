@@ -219,9 +219,9 @@ def entities(request,json_no):
 	json_arr = cluster_by_jsonno(json_no)
 	print("arr: ",json_arr)
 	pp = postprocessing.PostProcessing()
-	flag, disese, protein,rna,dna = pp.get_entities(query,json_arr)
+	flag,allentities = pp.get_entities(query,json_arr)
 	if flag:
-		return render(request,'home/entities.html',{'disese':disese, 'protein':protein, 'protein':rna, 'dna':dna})
+		return render(request,'home/entities.html',{'entities': allentities})
 	else:
 		return HttpResponse("No entities")
 

@@ -1,13 +1,68 @@
+body {
+    background: #ffffff;
+    color: #333333;
+    font-family: arial,sans-serif;
+    font-size: medium;
+    margin: 0px;
+}
+footer {
+    margin-left: 0%;
+}
+h1 {
+    color: rgb(32, 187, 192);
+    font: 2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+h2,h3 {
+    color: #4e1f7a;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+a:hover {
+    text-decoration: underline;
+    color: green;
+    cursor: pointer;
+}
+.container {
+    margin: 2%;
+}
 
 .disese, .protein, .rna, .dna {
     display: flex;
 }
 .container-left {
     flex: 2;
+    margin-right: 15px;
+    border: pink 1px solid;
+    border-radius: 10px;
+    padding-left: 10px;
 }
 .container-middle {
     flex: 1;
+    margin-right: 40px;
+}
+.operation {
+    border: pink 1px solid;
+    border-radius: 10px;
+    color: #cc4159;
+    font-size: medium;
+    padding: 3px 10px;
+    margin: 5px;
+    background: white;
+    cursor: pointer;
 }
 .container-right {
     flex: 2;
+    border: pink 1px solid;
+    border-radius: 10px;
+    padding-left: 10px;
+}
+.protein-class, .rna-class, .dna-class {
+    display: none;
+}
+textarea {
+    border: pink 1px solid;
+    border-radius: 10px;
+    font-size: medium;
+    padding: 5px;
+    color: #333333;
+    font-size: 1.2em;
 }
