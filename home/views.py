@@ -14,6 +14,9 @@ import nltk
 import json
 import re
 import operator
+import pickle
+import tqdm
+import numpy as np
 
 best_mesh_terms_id = OrderedDict()
 best_mesh_terms = OrderedDict()
@@ -54,8 +57,8 @@ def post(request,isfeedback = None,feedobj = None):
 			print("simple")
 			query = request.POST.get('query',None)
 			filepath = request.POST.get('genefile',None)
-		if filepath:
-			if query:
+		if query:
+			if filepath:
 				corpus = goldencorpus.GoldenCorpus(query,filepath)
 				found,mesh_terms = corpus.fetchData()
 				if not found:
@@ -108,7 +111,7 @@ def post(request,isfeedback = None,feedobj = None):
 			else:
 				return HttpResponse("No gene file found in post request !!")
 		else:
-			return HttpResponse("No filepath found in post request!!")
+			return HttpResponse("No query found in post request!!")
 	else:
 		return HttpResponse("Not a post request!")
 
@@ -212,16 +215,18 @@ def meshcloud(request, json_no):
 def generelation(request, json_no):
 	return HttpResponse("From gene relation")
 
-def entities(request,json_no):
-	global best_mesh_terms
+def entities(request,json_no,eoption):
 	global query
 
+	print("json_no: ", json_no)
+	print("option: ", eoption)
 	json_arr = cluster_by_jsonno(json_no)
 	print("arr: ",json_arr)
 	pp = postprocessing.PostProcessing()
-	flag,allentities = pp.get_entities(query,json_arr)
+	flag,allentities,data = pp.get_entities(query,json_arr,eoption)
+	# print(allentities)
 	if flag:
-		return render(request,'home/entities.html',{'entities': allentities})
+		return render(request,'home/entities.html',{'entities': allentities,'data':data})
 	else:
 		return HttpResponse("No entities")
 
@@ -264,6 +269,9 @@ def paperdetail(request,json_no,currindex,offset):
 
 	return render(request,'home/paperdetail.html',context)
 
+def seesimilar(request,json_no,currindex,offset):
+	return HttpResponse("From seesimilar")
+
 def feedback(request):
 	global stop_words
 	global mesh_terms
@@ -271,26 +279,37 @@ def feedback(request):
 	global query
 
 	error_occured = 0
-
-	str_data = request.POST.get('feedback',None)
+	try:
+		str_data = request.POST.get('feedback',None)
+		option = request.POST.get('option',None)
+		choice = request.POST.get('choice',None)
+		json_no = request.POST.get('json_no',None)
+	except KeyError:
+		return HttpResponse("No feedback data found in the request object !!")
 	data = json.loads(str_data)
-	# print(data)
+	print("option: ",option)
+	print("choice: ",choice)
+	print("json_no: ",json_no)
 	# Work with new data 
+	
 	relevant_indices = []
 	irrelevant_indices = []
-	for obj in data:
-		json_name = data[obj]['json_no']
-		if data[obj]['relevant'] == 1:
-			relevant_indices.append(data[obj]['offset'])
-		else:
-			irrelevant_indices.append(data[obj]['offset'])
-	# For each relevant paper count frequency of each word and 
-	# consider top frequent terms for next search
-	print("relevant indices: ",relevant_indices)
-	# print("irrele: ", irrelevant_indices)
-	if json_name:
+	if int(choice) == 1: # Relevance feedback
+		for obj in data:
+			if data[obj]['relevant'] == 1:
+				relevant_indices.append(data[obj]['offset'])
+			else:
+				irrelevant_indices.append(data[obj]['offset'])
+		# For each relevant paper count frequency of each word and 
+		# consider top frequent terms for next search
+		print("relevant indices: ",relevant_indices)
+		# print("irrele: ", irrelevant_indices)
+	elif int(choice) == 2: #Psudo-relevance : choose top 5 documents blindly
+		for index in range(0,5):
+			relevant_indices.append(index)
+	if json_no:
 		try:
-			file_name = "home/data_folder/"+query+"/"+str(json_name)+'.json'
+			file_name = "home/data_folder/"+query+"/"+str(json_no)+'.json'
 			print("file: ", file_name)
 			with open(file_name, 'r') as f:
 				json_object = json.load(f)
@@ -306,86 +325,115 @@ def feedback(request):
 			for index in relevant_indices:
 				abs += data_abstract[index]
 				relevant_meshterms.append(data_mesh[index])
-		# print(relevant_meshterms)		
-	
+		
 		# Recognize entities and count frequency
 		# Method one : using scispacy
-		nlp = spacy.load("en_ner_bionlp13cg_md")
-		doc = nlp(abs)
-		entities = ""
-		for ent in doc.ents:
-			entities += str(ent) + " "
-		frequency = Counter(entities.split()).most_common()
+		frequency = {}
+		if int(option) == 1:
+			nlp = spacy.load("en_ner_bionlp13cg_md")
+			doc = nlp(abs)
+			entities = ""
+			for ent in doc.ents:
+				entities += str(ent) + " "
+			frequency = Counter(entities.split()).most_common()
 		# print(frequency)
 
 		# Method two: Association mining
 		# calculate association 'interest measure for each unique concept' and get the top scored concepts
 		# for next round of search
-		# relevant_abs = []
-		# for index in relevant_indices:
-		# 	relevant_abs.append(data_abstract[index])
-		# alllines = findalllines(relevant_abs)
-		# allconcepts = findallconcepts(relevant_abs)
-		# print("allconcepts: ",len(allconcepts))
-		# concept_score = {}
-		# for concept in allconcepts:
-		# 	# find interest measure for a particular concept
-		# 	print("concept: ",concept)
-		# 	conceptcount = 0
-		# 	partialquerycount = 0
-		# 	intersectioncount = 0
-		# 	for line in alllines:
-		# 		queryexist = getPartialQueryCount(line,query)
-		# 		if isbelong(line,concept):
-		# 			conceptexist = 1
-		# 		else:
-		# 			conceptexist = 0
-		# 		intersectionexist = queryexist*conceptexist
-		# 		# update total count for each concept
-		# 		conceptcount += conceptexist
-		# 		partialquerycount += queryexist
-		# 		intersectioncount += intersectionexist
-		# 	# calculate interest measure for selected concept
-		# 	mul = conceptcount * partialquerycount
-		# 	if mul:
-		# 		concept_score[str(concept)] = len(alllines)*intersectioncount / mul
-		# # sort concept_socore by value
-		# concept_score = sorted(concept_score.items(), key=operator.itemgetter(1),reverse=True)
-		# print(concept_score)
-
-		# Find top k terms : using pretrained model 
-		# Load XGboost trained model
-		# Then predict 
-		# biological_model.dataset_prepare()
-		
+		relevant_abs = []
+		if int(option) == 2:
+			for index in relevant_indices:
+				relevant_abs.append(data_abstract[index])
+			alllines = findalllines(relevant_abs)
+			allconcepts = findallconcepts(relevant_abs)
+			print("allconcepts: ",len(allconcepts))
+			concept_score = {}
+			for concept in allconcepts:
+				# find interest measure for a particular concept
+				# print("concept: ",concept)
+				conceptcount = 0
+				partialquerycount = 0
+				intersectioncount = 0
+				for line in alllines:
+					queryexist = getPartialQueryCount(line,query)
+					if isbelong(line,concept):
+						conceptexist = 1
+					else:
+						conceptexist = 0
+					intersectionexist = queryexist*conceptexist
+					# update total count for each concept
+					conceptcount += conceptexist
+					partialquerycount += queryexist
+					intersectioncount += intersectionexist
+				# calculate interest measure for selected concept
+				mul = conceptcount * partialquerycount
+				if mul:
+					concept_score[str(concept)] = len(alllines)*intersectioncount / mul
+			# sort concept_socore by value
+			concept_score = sorted(concept_score.items(), key=operator.itemgetter(1),reverse=True)
+			# print(concept_score)
+			with open('concept', 'wb') as con:
+				pickle.dump(concept_score,con)
+			# Find top k terms : using pretrained model 
+			# Load XGboost trained model
+			# Then predict 
+			# biological_model.dataset_prepare()
+			return HttpResponse("Will take long time . Better do in colab.research")
+			wordfile = 'word_representation'
+			word_dict = {}
+			with open(wordfile,'rb') as f:
+				word_dict = pickle.load(f)
+			print("word loaded")
+			filename = 'finalized_model.sav'
+			loaded_model = pickle.load(open(filename, 'rb'))
+			print("model loaded")
+			# Predict
+			c = 0
+			x_test = []
+			for k,v in concept_score:
+				try:
+					x_test.append(word_dict[str(k)])
+				except KeyError:
+					continue
+			print("test data done")
+			y_pred = loaded_model.predict(x_test)
+			print("prediction success")
+			c = 0
+			for i in range(0,len(y_pred)):
+				if y_pred[i] == 1:
+					frequency[str(x_test[i])] = 1
+					c += 1
+				if c >= 4:
+					break
+			print(frequency)
 		# First method : find intersection with all mesh explosion and return result for nearest mesh
 		# mesh_explo = mesh_explosion.DataForEachMeshTerm(None,None)
 		# expanded_mesh_terms = mesh_explo.getMeshTermCombinations(mesh_terms)
 		# print(expanded_mesh_terms)
 
 		# Second method: add top terms with user query and search
-		# ii = 0
-		# feedbackquery = query
-		# for k,v in frequency:
-		# 	feedbackquery = feedbackquery +" "+ str(k)
-		# 	ii = ii + 1
-		# 	if ii > 2: break
-		# myobj = {'query' : feedbackquery, 'filepath' : filepath,'ismorefilter' : 0}
-		# print(myobj)
+		ii = 0
+		feedbackquery = query
+		for k,v in frequency:
+			feedbackquery = feedbackquery +" "+ str(k)
+			ii = ii + 1
+			if ii > 2: break
+		myobj = {'query' : feedbackquery, 'filepath' : filepath,'ismorefilter' : 0}
+		print(myobj)
 
 		# Third method: Use top terms as filter to create golden corpus
-		ii = 0
-		feedbackarr = []
-		for k,v in frequency:
-			feedbackarr.append(k)
-			ii = ii + 1
-			if ii >= 5: break
-		myobj = {'query' : query,'filepath': filepath,'ismorefilter' : 1,'feedbackarr': feedbackarr}
+		# ii = 0
+		# feedbackarr = []
+		# for k,v in frequency:
+		# 	feedbackarr.append(k)
+		# 	ii = ii + 1
+		# 	if ii >= 5: break
+		# myobj = {'query' : query,'filepath': filepath,'ismorefilter' : 1,'feedbackarr': feedbackarr}
+
 		return post(request,1,myobj)
 	else: # error reading json file
 		return HttpResponse("Error in reading json file")
-
-
 
 def findalllines(abstracts):
 	abslist = []

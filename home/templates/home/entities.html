@@ -6,28 +6,42 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="ie=edge">
         <title>Entities Recognition</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
         <link rel="stylesheet" type="text/css" href="{% static 'home/entities.css' %}">
         <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
         <script>
             // handle radio button click
             $(document).ready(function(){
+                // handle view option
+                $("#outercontainer1").show();
+                $("input[name$='settag-name']").click(function(){
+                    let val = $(this).val();
+                    if (parseInt(val) == 1){
+                        $("#outercontainer2").hide();
+                        $("#outercontainer1").show();
+                    }
+                    else{
+                        $("#outercontainer1").hide();
+                        $("#outercontainer2").show();
+                    }
+                });
                 // handle protein 
                 $("input[name$='p-same']").click(function(){
-                    console.log("clicked ");
                     let val = $(this).val();
                     $("div.protein-class").hide();
                     $("#protein" + val).show();
                 });
                 // handle rna 
                 $("input[name$='r-same']").click(function(){
-                    console.log("clicked ");
                     let val = $(this).val();
                     $("div.rna-class").hide();
                     $("#rna" + val).show();
                 });
                 // handle dna 
                 $("input[name$='d-same']").click(function(){
-                    console.log("clicked ");
                     let val = $(this).val();
                     $("div.dna-class").hide();
                     $("#dna" + val).show();
@@ -53,8 +67,6 @@
                         filechecked = 0;
                     tarea = document.getElementById('resulted-protein-id');
                     leftdata = protein;
-                    console.log(text);
-                    console.log(leftdata);
                 }
                 else if(flag == 2){ // for RNA
                     f = document.getElementById('rna-file');
@@ -78,7 +90,6 @@
                     leftdata = dna;
                 }
                 if(f.files.length > 0 && filechecked){
-                    console.log("file selected");
                     let file = f.files[0];
                     let mytext;
                     // Read file 
@@ -129,8 +140,6 @@
                         filechecked = 0;
                     tarea = document.getElementById('resulted-protein-id');
                     leftdata = protein;
-                    console.log(text);
-                    console.log(leftdata);
                 }
                 else if(flag == 2){ // for RNA
                     f = document.getElementById('rna-file');
@@ -154,7 +163,6 @@
                     leftdata = dna;
                 }
                 if(f.files.length > 0 && filechecked){
-                    console.log("file selected");
                     let file = f.files[0];
                     let mytext;
                     // Read file 
@@ -230,7 +238,6 @@
                     leftdata = dna;
                 }
                 if(f.files.length > 0 && filechecked){
-                    console.log("file selected");
                     let file = f.files[0];
                     let mytext;
                     // Read file 
@@ -347,138 +354,175 @@
     </head>
     <body>
         <div class="container">
+            <h2>Select what you want to see: </h2>
+            <div class="custom-control custom-radio">
+                <!-- Maintain order of input tag and label tag -->
+                <input type="radio" class="custom-control-input" id="setops-radio1" name="settag-name" value="1" checked> 
+                <label class="custom-control-label" for="setops-radio1">Entities and Set operation</label>
+            </div>
+            <div class="custom-control custom-radio">
+                <!-- Maintain order of input tag and label tag -->
+                <input type="radio" class="custom-control-input" id="abstag-radio2" name="settag-name" value="2">
+                <label class="custom-control-label" for="abstag-radio2">Abstracts with Tagged Entities</label>
+            </div>
+        </div>
+        <!-- display: none is important -->
+        <div id="outercontainer1" style="display: none">
             {% if entities %}
-                {{ entities|json_script:"mydata"}}
-                {% if entities.disese %}
-                <div><h1>Entity: disese</h1></div>
-                <div class="disese">
-                    <div class="container-left">
-                        <h3>Cluster disese set</h3>
-                        {% for disese in entities.disese %}
-                            <p>{{disese}}, </p>
-                        {% endfor %}
-                    </div>
-                    <div class="container-middle"></div>
-                    <div style="flex: 2"></div>
+                <div class="container" style="display: flex; flex-direction: column">
+                    {% if entities %}
+                        {{ entities|json_script:"mydata"}}
+                        {% if entities.disese %}
+                        <div><h1>Entity: disese</h1></div>
+                        <div class="disese">
+                            <div class="container-left">
+                                <h3>Cluster disese set</h3>
+                                <p>
+                                    {% for disese in entities.disese %}
+                                        {{disese}},
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <div class="container-middle"></div>
+                            <div style="flex: 2"></div>
+                        </div>
+                        {% endif %}
+                        {% if entities.protein %}
+                        <div><h1>Entity: protein</h1></div>
+                        <div class="protein">
+                            <div class="container-left">
+                                <h3>Cluster protein set</h3>
+                                <p>
+                                    {% for protein in entities.protein %}
+                                        {{protein}},
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <div class="container-middle">
+                                <h3>Set operations between cluster and user protein set</h3>
+                                <div style="display: flex; flex-direction: column">
+                                    <button onclick="union(1)" class="operation">Union</button>
+                                    <button onclick="intersection(1)" class="operation">Intersection</button>
+                                    <button onclick="leftright_difference(1)" class="operation">Left - Right</button>
+                                    <button onclick="rightleft_difference(1)" class="operation">Right - Left</button>
+                                </div>
+                            </div>
+                            <div class="container-right">
+                                <h3>Your protein set</h3>
+                                <div style="display: flex">
+                                    <div><input id="p-radio-file" type="radio" name="p-same" value="1"> Protein file</div><br>
+                                    <div><input id="p-radio-text" type="radio" name="p-same" value="2"> Protein names</div>
+                                </div>
+                                <div id="protein1" class="protein-class">
+                                    <h3>Choose a Protein file:</h3>
+                                    <input type="file" id="protein-file" name="proteinfile" accept="text">
+                                </div>	
+                                <div id="protein2" class="protein-class">
+                                    <h3>Enter protein names: </h3>
+                                    <textarea style="width: 95%; height: 65px; resize: none" name="protein-name" id="protein-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="protein-result">
+                            <h3>Resulted protein names: </h3>
+                            <textarea style="width: 99%; height: 100px; resize: none" name="resulted-protein-name" id="resulted-protein-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                        {% endif %}
+                        {% if entities.rna %}
+                        <div><h1>Entity: RNA</h1></div>
+                        <div class="rna">
+                            <div class="container-left">
+                                <h3>Cluster RNA set</h3>
+                                <p>
+                                    {% for rna in entities.rna %}
+                                        {{rna}},
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <div class="container-middle">
+                                <h3>Set operations between cluster and user RNA set</h3>
+                                <div style="display: flex; flex-direction: column">
+                                    <button onclick="union(2)" class="operation">Union</button>
+                                    <button onclick="intersection(2)" class="operation">Intersection</button>
+                                    <button onclick="leftright_difference(2)" class="operation">Left - Right</button>
+                                    <button onclick="rightleft_difference(2)" class="operation">Right - Left</button>
+                                </div>
+                            </div>
+                            <div class="container-right">
+                                <h3>Your RNA set</h3>
+                                <div style="display: flex">
+                                    <div><input id="r-radio-file" type="radio" name="r-same" value="1"> RNA file</div><br>
+                                    <div><input id="r-radio-text" type="radio" name="r-same" value="2"> RNA names</div>
+                                </div>
+                                <div id="rna1" class="rna-class">
+                                    <h3>Choose a RNA file:</h3>
+                                    <input type="file" id="rna-file" name="rnafile" accept="text">
+                                </div>	
+                                <div id="rna2" class="rna-class">
+                                    <h3>Enter RNA names: </h3>
+                                    <textarea style="width: 95%; height: 65px; resize: none" name="rna-name" id="rna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rna-result">
+                            <h3>Resulted RNA names: </h3>
+                            <textarea style="width: 99%; height: 100px; resize: none" name="resulted-rna-name" id="resulted-rna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                        {% endif %}
+                        {% if entities.dna %}
+                        <div><h1>Entity: DNA</h1></div>
+                        <div class="dna">
+                            <div class="container-left">
+                                <h3>Cluster DNA set</h3>
+                                <p>
+                                    {% for dna in entities.dna %}
+                                        {{dna}},
+                                    {% endfor %}
+                                </p>
+                            </div>
+                            <div class="container-middle">
+                                <h3>Set operations between cluster and user DNA set</h3>
+                                <div style="display: flex; flex-direction: column">
+                                    <button onclick="union(3)" class="operation">Union</button>
+                                    <button onclick="intersection(3)" class="operation">Intersection</button>
+                                    <button onclick="leftright_difference(3)" class="operation">Left - Right</button>
+                                    <button onclick="rightleft_difference(3)" class="operation">Right - Left</button>
+                                </div>
+                            </div>
+                            <div class="container-right">
+                                <h3>Your DNA set</h3>
+                                <div style="display: flex">
+                                    <div><input id="d-radio-file" type="radio" name="d-same" value="1"> DNA file</div><br>
+                                    <div><input id="d-radio-text" type="radio" name="d-same" value="2"> DNA names</div>
+                                </div>
+                                <div id="dna1" class="dna-class">
+                                    <h3>Choose a DNA file:</h3>
+                                    <input type="file" id="dna-file" name="dnafile" accept="text">
+                                </div>	
+                                <div id="dna2" class="dna-class">
+                                    <h3>Enter DNA names: </h3>
+                                    <textarea style="width: 95%; height: 65px; resize: none" name="dna-name" id="dna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dna-result">
+                            <h3>Resulted DNA names: </h3>
+                            <textarea style="width: 99%; height: 100px; resize: none" name="resulted-dna-name" id="resulted-dna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                        </div>
+                        {% endif %}
+                    {% endif %}
                 </div>
-                {% endif %}
-                {% if entities.protein %}
-                <div><h1>Entity: protein</h1></div>
-                <div class="protein">
-                    <div class="container-left">
-                        <h3>Cluster protein set</h3>
-                        {% for protein in entities.protein %}
-                            <p>{{protein}}, </p>
-                        {% endfor %}
+            {% endif %}
+        </div>
+        <div id="outercontainer2" style="display: none">
+            {% if data %}
+                {% for title, abs, pmid in data %}
+                    <div class="titleabs">
+                        <h2 class="title">{{title | safe}}</h2>
+                        <span class="abs">{{abs | safe}}</span>
+                        <h2>PMID: {{pmid | safe}}</h2>
                     </div>
-                    <div class="container-middle">
-                        <h3>Set operations between cluster and user protein set</h3>
-                        <div style="display: flex; flex-direction: column">
-                            <button onclick="union(1)" class="operation">Union</button>
-                            <button onclick="intersection(1)" class="operation">Intersection</button>
-                            <button onclick="leftright_difference(1)" class="operation">Left - Right</button>
-                            <button onclick="rightleft_difference(1)" class="operation">Right - Left</button>
-                        </div>
-                    </div>
-                    <div class="container-right">
-                        <h3>Your protein set</h3>
-                        <div style="display: flex">
-                            <div><input id="p-radio-file" type="radio" name="p-same" value="1"> Protein file</div><br>
-                            <div><input id="p-radio-text" type="radio" name="p-same" value="2"> Protein names</div>
-                        </div>
-                        <div id="protein1" class="protein-class">
-                            <h3>Choose a Protein file:</h3>
-                            <input type="file" id="protein-file" name="proteinfile" accept="text">
-                        </div>	
-                        <div id="protein2" class="protein-class">
-                            <h3>Enter protein names: </h3>
-                            <textarea style="width: 95%; height: 65px; resize: none" name="protein-name" id="protein-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="protein-result">
-                    <h3>Resulted protein names: </h3>
-                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-protein-name" id="resulted-protein-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                </div>
-                {% endif %}
-                {% if entities.rna %}
-                <div><h1>Entity: RNA</h1></div>
-                <div class="rna">
-                    <div class="container-left">
-                        <h3>Cluster RNA set</h3>
-                        {% for rna in entities.rna %}
-                            <p>{{rna}}, </p>
-                        {% endfor %}
-                    </div>
-                    <div class="container-middle">
-                        <h3>Set operations between cluster and user RNA set</h3>
-                        <div style="display: flex; flex-direction: column">
-                            <button onclick="union(2)" class="operation">Union</button>
-                            <button onclick="intersection(2)" class="operation">Intersection</button>
-                            <button onclick="leftright_difference(2)" class="operation">Left - Right</button>
-                            <button onclick="rightleft_difference(2)" class="operation">Right - Left</button>
-                        </div>
-                    </div>
-                    <div class="container-right">
-                        <h3>Your RNA set</h3>
-                        <div style="display: flex">
-                            <div><input id="r-radio-file" type="radio" name="r-same" value="1"> RNA file</div><br>
-                            <div><input id="r-radio-text" type="radio" name="r-same" value="2"> RNA names</div>
-                        </div>
-                        <div id="rna1" class="rna-class">
-                            <h3>Choose a RNA file:</h3>
-                            <input type="file" id="rna-file" name="rnafile" accept="text">
-                        </div>	
-                        <div id="rna2" class="rna-class">
-                            <h3>Enter RNA names: </h3>
-                            <textarea style="width: 95%; height: 65px; resize: none" name="rna-name" id="rna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="rna-result">
-                    <h3>Resulted RNA names: </h3>
-                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-rna-name" id="resulted-rna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                </div>
-                {% endif %}
-                {% if entities.dna %}
-                <div><h1>Entity: DNA</h1></div>
-                <div class="dna">
-                    <div class="container-left">
-                        <h3>Cluster DNA set</h3>
-                        {% for dna in entities.dna %}
-                            <p>{{dna}}, </p>
-                        {% endfor %}
-                    </div>
-                    <div class="container-middle">
-                        <h3>Set operations between cluster and user DNA set</h3>
-                        <div style="display: flex; flex-direction: column">
-                            <button onclick="union(3)" class="operation">Union</button>
-                            <button onclick="intersection(3)" class="operation">Intersection</button>
-                            <button onclick="leftright_difference(3)" class="operation">Left - Right</button>
-                            <button onclick="rightleft_difference(3)" class="operation">Right - Left</button>
-                        </div>
-                    </div>
-                    <div class="container-right">
-                        <h3>Your DNA set</h3>
-                        <div style="display: flex">
-                            <div><input id="d-radio-file" type="radio" name="d-same" value="1"> DNA file</div><br>
-                            <div><input id="d-radio-text" type="radio" name="d-same" value="2"> DNA names</div>
-                        </div>
-                        <div id="dna1" class="dna-class">
-                            <h3>Choose a DNA file:</h3>
-                            <input type="file" id="dna-file" name="dnafile" accept="text">
-                        </div>	
-                        <div id="dna2" class="dna-class">
-                            <h3>Enter DNA names: </h3>
-                            <textarea style="width: 95%; height: 65px; resize: none" name="dna-name" id="dna-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="dna-result">
-                    <h3>Resulted DNA names: </h3>
-                    <textarea style="width: 99%; height: 65px; resize: none" name="resulted-dna-name" id="resulted-dna-id" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
-                </div>
-                {% endif %}
+                {% endfor %}
             {% endif %}
         </div>
     </body>

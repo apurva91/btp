@@ -4,6 +4,8 @@ from . import mesh_explosion
 import operator
 from random import randint
 import xlrd
+from . import entity_recognition as enrecog
+import re
 
 
 class PostProcessing():
@@ -24,7 +26,6 @@ class PostProcessing():
         toptitles,topabs, completeabstracts = self.split_abstracts(index,abstracts,titles)
         return toptitles, topabs, completeabstracts
 
-
     def split_abstracts(self,index,abstracts,titles):
         count = 0
         trimmedabstracts = []
@@ -37,7 +38,6 @@ class PostProcessing():
             index += 1
             count += 1
         return trimmedtitles,trimmedabstracts,completeabstracts
-
 
     def getProcessedAbs(self, abstract):
         abs = ""
@@ -274,44 +274,83 @@ class PostProcessing():
         for _i in range(0, len(genefile_arr)):
             new_list = []
 
-    def get_entities(self,query,json_arr):
+    def get_entities(self,query,json_arr,option):
         if len(json_arr) < 0:
             return 0,None
         else:
             abstracts = []
+            pmids = []
+            titles = []
             for json_id in json_arr:
                 try:
                     path = "home/data_folder/"+query+"/"+str(json_id)+'.json'
                     with open(path,'r') as f:
                         json_object = json.load(f)
                         abstracts.extend(json_object["abstracts"])
+                        pmids.extend(json_object["articleIds"])
+                        titles.extend(json_object["titles"])
                 except FileNotFoundError:
                     continue
-            if len(abstracts) > 0:
+                # system can't handle all data : Need more RAM
+                break 
+            # Make a long string of abstracts for entity recognition
+            abs = ""
+            for i in range(len(abstracts)):
+                abs += abstracts[i]
+            if len(abs) > 0:
                 # call entity recognition model here
-
-                disese = ["hello"]
-                protein = ["hi"]
-                rna = ["hehe"]
-                dna = ["huhu"]
-                
                 entities = {}
-                entities["disese"] = disese
-                entities["protein"] = protein
-                entities["rna"] = rna
-                entities["dna"] = dna
-                return 1, entities
+                disese = []
+                protein = []
+                rna = []
+                dna = []
+                if option == 1:
+                    disese,protein,rna,dna = enrecog.entity_recog_nn(abs)
+                elif option == 2:
+                    disese,protein,rna,dna = enrecog.entity_recog_rb(abs)
+                if disese:
+                    disese = list(disese)
+                    entities["disese"] = disese
+                if protein:
+                    protein = list(protein)
+                    entities["protein"] = protein
+                if rna:
+                    rna = list(rna)
+                    entities["rna"] = rna
+                if dna:
+                    dna = list(dna)
+                    entities["dna"] = dna
+                if len(disese):
+                    for rog in disese:
+                        toreplace = "<span class='disese-highlight' data-toggle=\"tooltip\" title=\"Disese\">\g<0></span>"
+                        pattern = re.escape(rog)
+                        for index in range(len(abstracts)):
+                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                if len(protein):
+                    for pro in protein:
+                        toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
+                        pattern = re.escape(pro)
+                        for index in range(len(abstracts)):
+                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                if len(rna):
+                    for _r in rna:
+                        toreplace = "<span class='rna-highlight' data-toggle=\"tooltip\" title=\"RNA\">\g<0></span>"
+                        pattern = re.escape(_r)
+                        for index in range(len(abstracts)):
+                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                if len(dna):
+                    for d in dna:
+                        toreplace = "<span class='dna-highlight' data-toggle=\"tooltip\" title=\"DNA\">\g<0></span>"
+                        pattern = re.escape(d)
+                        for index in range(len(abstracts)):
+                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                data = zip(titles,abstracts,pmids)
+                return 1, entities,data
             else:
                 return 0,None
                             
-
-
-
-
-
-
-
-
-
-
 

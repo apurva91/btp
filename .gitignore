@@ -2,3 +2,7 @@ home/data_folder/*
 home/golden_corpus/*
 home/*.txt
 home/*.xlsx
+home/*.js
+home/static/home/*.js
+word_representation
+concept

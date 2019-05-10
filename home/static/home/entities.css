@@ -10,7 +10,7 @@ footer {
 }
 h1 {
     color: rgb(32, 187, 192);
-    font: 2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+    font: 1.4em 'Segoe UI',Arial,Helvetica,Sans-Serif;
 }
 h2,h3 {
     color: #4e1f7a;
@@ -65,4 +65,27 @@ textarea {
     padding: 5px;
     color: #333333;
     font-size: 1.2em;
+}
+
+/* For anotated data */
+.titleabs {
+    margin-bottom: 26px;
+}
+.title {
+    color: #19447E;
+}
+.abs {
+   color:#545454;
+}
+.disese-highlight {
+    background-color: yellow;
+}
+.protein-highlight {
+    background-color: pink;
+}
+.rna-highlight {
+    background-color: #66ff66;
+}
+.dna-highlight {
+    background-color: orange;
 }
