@@ -93,7 +93,7 @@
                     choice = 1;
                 else if(document.getElementById("feedback-radio4").checked)
                     choice = 2;
-                $("body").html("<h2 style=\" margin-top: 25%; margin-left: 50%\"> Lodding...</h2>");
+                $("body").html("<h2 style=\" margin-top: 25%; margin-left: 50%\"> Loading...</h2>");
                 $.ajax({
                     type: "POST",
                     url: "/user-feedback/",
@@ -269,7 +269,7 @@
                     </div>
                     <div class="cloud">
                         <span><a href="{% url 'home:genecloud' json_no %}">Gene Cloud</a></span>
-                        <span><a href="{% url 'home:generelation' json_no %}">Gene Relation</a></span>
+                        <span><a href="{% url 'home:entityrelation' json_no %}">Entity Relation</a></span>
                         <span><a href="{% url 'home:meshcloud' json_no %}">Mesh Cloud</a></span>
                     </div>
                     <div>

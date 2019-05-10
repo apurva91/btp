@@ -212,8 +212,14 @@ def meshcloud(request, json_no):
 	else:
 		return HttpResponse("Something wrong with mesh cloud!")
 
-def generelation(request, json_no):
-	return HttpResponse("From gene relation")
+def entityrelation(request, json_no):
+	json_arr = cluster_by_jsonno(json_no)
+	pp = postprocessing.PostProcessing()
+	flag,data = pp.find_entityrelation(json_arr)
+	if flag:
+		return render(request,'home/entityrelation.html',{'data':data})
+	else:
+		return HttpResponse("No entity relation found")
 
 def entities(request,json_no,eoption):
 	global query

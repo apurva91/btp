@@ -12,7 +12,7 @@ urlpatterns = [
     path('seesimilar/<int:json_no>/<int:currindex><int:offset>/' , views.seesimilar, name='seesimilar'),
     path('genecloud/<int:json_no>/', views.genecloud, name='genecloud'),
     path('meshcloud/<int:json_no>/', views.meshcloud, name='meshcloud'),
-    path('generelation/<int:json_no>/', views.generelation, name='generelation'),
+    path('entityrelation/<int:json_no>/', views.entityrelation, name='entityrelation'),
     path('entities/<int:json_no>/<int:eoption>/', views.entities, name='entities'),
     path('user-feedback/', views.feedback, name='feedback'),
 ]

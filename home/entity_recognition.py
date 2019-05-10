@@ -1,7 +1,6 @@
 import scispacy
 import spacy
 import sklearn_crfsuite
-# import eli5
 import pickle
 import csv
 import re
@@ -9,92 +8,112 @@ from nltk import tokenize
 
 def entity_recog_nn(text):
 	nlp1 = spacy.load("en_ner_jnlpba_md")
-	nlp2 = spacy.load("en_ner_bc5cdr_md")
+	nlp2 = spacy.load("en_ner_bionlp13cg_md")
+	nlp3 = spacy.load("en_ner_bc5cdr_md")
 	doc1 = nlp1(text)
 	doc2 = nlp2(text)
-	disease=[]
-	dna=[]
-	rna=[]
-	protein=[]
+	doc3 = nlp3(text)
+	
+	protein=set()
+	gene=set()
+	disease=set()
 
 	for entity in doc1.ents:
-		if entity.label_=="DNA":
-			dna.append(entity.text)
-		elif entity.label_=="RNA":
-			rna.append(entity.text)
-		else:
-			protein.append(entity.text)
+		if entity.label_=="PROTEIN":
+			protein.add(entity.text)
 
 	for entity in doc2.ents:
+		if entity.label_=="GENE_OR_GENE_PRODUCT" and entity.text not in protein:
+			gene.add(entity.text)
+
+	for entity in doc3.ents:
 		if entity.label_=="DISEASE":
-			disease.append(entity.text)
-	disease = set(disease)
-	protein = set(protein)
-	rna = set(rna)
-	dna = set(dna)
-	return disease,protein,rna,dna
+			disease.add(entity.text)
+
+	return disease,gene,protein
 
 def entity_recog_rb(text):
 	test = tokenize.sent_tokenize(text)
+	
 	temp = []
 	for sent in test:
-		temp.append(sent.strip().split(' '))
+		r = sent.strip().split(' ')
+		t = []
+		for i in range(len(r)):
+			r[i]=r[i].replace(' ','')
+			r[i]=r[i].replace('.','')
+			r[i]=r[i].replace(',','')
+			if len(r[i]) > 0:
+				t.append(r[i])
+		temp.append(t)
 
-
+	# print(temp)
 	X = [sent2features(s) for s in temp]
 
-	loaded_model1 = pickle.load(open('home/gene_model.pkl', 'rb'))
-	loaded_model2 = pickle.load(open('home/disease_model.pkl', 'rb'))
+	loaded_model1 = pickle.load(open('protein_model.pkl', 'rb'))
+	loaded_model2 = pickle.load(open('gene_model.pkl','rb'))
+	loaded_model3 = pickle.load(open('disease_model.pkl', 'rb'))
 
 	y1 = loaded_model1.predict(X)
 	y2 = loaded_model2.predict(X)
+	y3 = loaded_model3.predict(X)
 
-	disease=[]
-	dna=[]
-	rna=[]
 	protein=[]
+	gene=[]
+	disease=[]
 
-	print(y1)
-	print(y2)
-	ent=''
+	prot=set()
+	ge=set()
+	dis=set()
+	# print(y1)
+	# print(y2)
+	# print(y3)
+
 
 	
-	k=-1
-	l=-1
-	m=-1
 	n=-1
 	for i in range(len(y1)):
 		for j in range(len(y1[i])):
-			if y1[i][j]=='B-protein':
+			if y1[i][j]=='B-Protein':
 				protein.append(temp[i][j]+' ')
-				k += 1
-			elif y1[i][j]=='I-protein':
-				protein[k] += temp[i][j]
-			elif y1[i][j]=='B-DNA':
-				dna.append(temp[i][j]+' ')
-				l += 1
-			elif y1[i][j]=='I-DNA':
-				dna[l] += temp[i][j]
-			elif y1[i][j]=='B-RNA':
-				rna.append(temp[i][j]+' ')
-				m += 1
-			elif y1[i][j]=='I-RNA':
-				rna[m] += temp[i][j]
+				n += 1
+			elif y1[i][j]=='I-Protein':
+				protein[n] += temp[i][j]
 
+	for p in protein:
+		prot.add(p)
 
+	n=-1
+	flag=0
 	for i in range(len(y2)):
 		for j in range(len(y2[i])):
-			if y2[i][j]=='B-Disease':
+			if y2[i][j]=='B-Gene_or_gene_product':
+				gene.append(temp[i][j]+' ')
+				n += 1
+				flag=1
+			elif y2[i][j]=='I-Gene_or_gene_product':
+				gene[n] += temp[i][j]
+			elif flag and gene[n] in protein:
+				gene.remove(gene[n])
+				n -= 1
+				flag=0
+
+	for g in gene:
+		ge.add(g)
+
+	n=-1
+	for i in range(len(y3)):
+		for j in range(len(y3[i])):
+			if y3[i][j]=='B-Disease':
 				disease.append(temp[i][j]+' ')
 				n += 1
-			elif y2[i][j]=='I-Disease':
+			elif y3[i][j]=='I-Disease':
 				disease[n] += temp[i][j]
 
-	disease = set(disease)
-	protein = set(protein)
-	rna = set(rna)
-	dna = set(dna)
-	return disease,protein,rna,dna
+	for d in disease:
+		dis.add(d)
+
+	return dis,ge,prot
 	
 
 def word2features(sentence, index):

@@ -296,58 +296,53 @@ class PostProcessing():
             # Make a long string of abstracts for entity recognition
             abs = ""
             for i in range(len(abstracts)):
+                abs += " "
                 abs += abstracts[i]
+            # print(abs)
             if len(abs) > 0:
                 # call entity recognition model here
                 entities = {}
-                disese = []
+                disease = []
+                gene = []
                 protein = []
-                rna = []
-                dna = []
                 if option == 1:
-                    disese,protein,rna,dna = enrecog.entity_recog_nn(abs)
+                    disease,gene,protein = enrecog.entity_recog_nn(abs)
                 elif option == 2:
-                    disese,protein,rna,dna = enrecog.entity_recog_rb(abs)
-                if disese:
-                    disese = list(disese)
-                    entities["disese"] = disese
+                    disease,gene,protein = enrecog.entity_recog_rb(abs)
+                if disease:
+                    disease = list(disease)
+                    entities["disease"] = disease
+                if gene:
+                    gene = list(gene)
+                    entities["gene"] = gene
                 if protein:
                     protein = list(protein)
                     entities["protein"] = protein
-                if rna:
-                    rna = list(rna)
-                    entities["rna"] = rna
-                if dna:
-                    dna = list(dna)
-                    entities["dna"] = dna
-                if len(disese):
-                    for rog in disese:
-                        toreplace = "<span class='disese-highlight' data-toggle=\"tooltip\" title=\"Disese\">\g<0></span>"
-                        pattern = re.escape(rog)
-                        for index in range(len(abstracts)):
-                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
-                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                if len(disease):
+                    for rog in disease:
+                        toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
+                        if len(rog) > 2:
+                            pattern = re.escape(rog)
+                            for index in range(len(abstracts)):
+                                abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                                titles[index] = re.sub(pattern,toreplace,titles[index])
                 if len(protein):
                     for pro in protein:
                         toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
-                        pattern = re.escape(pro)
-                        for index in range(len(abstracts)):
-                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
-                            titles[index] = re.sub(pattern,toreplace,titles[index])
-                if len(rna):
-                    for _r in rna:
-                        toreplace = "<span class='rna-highlight' data-toggle=\"tooltip\" title=\"RNA\">\g<0></span>"
-                        pattern = re.escape(_r)
-                        for index in range(len(abstracts)):
-                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
-                            titles[index] = re.sub(pattern,toreplace,titles[index])
-                if len(dna):
-                    for d in dna:
-                        toreplace = "<span class='dna-highlight' data-toggle=\"tooltip\" title=\"DNA\">\g<0></span>"
-                        pattern = re.escape(d)
-                        for index in range(len(abstracts)):
-                            abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
-                            titles[index] = re.sub(pattern,toreplace,titles[index])
+                        if len(pro) > 2:
+                            pattern = re.escape(pro)
+                            for index in range(len(abstracts)):
+                                abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                                titles[index] = re.sub(pattern,toreplace,titles[index])
+                if len(gene):
+                    for _g in gene:
+                        toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
+                        if len(_g) > 2:
+                            pattern = re.escape(_g)
+                            for index in range(len(abstracts)):
+                                abstracts[index] = re.sub(pattern,toreplace,abstracts[index])
+                                titles[index] = re.sub(pattern,toreplace,titles[index])
+                
                 data = zip(titles,abstracts,pmids)
                 return 1, entities,data
             else:

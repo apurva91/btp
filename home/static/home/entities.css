@@ -21,11 +21,9 @@ a:hover {
     color: green;
     cursor: pointer;
 }
-.container {
-    margin: 2%;
-}
 
-.disese, .protein, .rna, .dna {
+
+.disease, .protein, .gene {
     display: flex;
 }
 .container-left {
@@ -55,7 +53,7 @@ a:hover {
     border-radius: 10px;
     padding-left: 10px;
 }
-.protein-class, .rna-class, .dna-class {
+.protein-class, .gene-class {
     display: none;
 }
 textarea {
@@ -77,15 +75,12 @@ textarea {
 .abs {
    color:#545454;
 }
-.disese-highlight {
+.disease-highlight {
     background-color: yellow;
 }
 .protein-highlight {
     background-color: pink;
 }
-.rna-highlight {
+.gene-highlight {
     background-color: #66ff66;
-}
-.dna-highlight {
-    background-color: orange;
 }
