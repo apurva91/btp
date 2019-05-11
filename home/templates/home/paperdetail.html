@@ -7,17 +7,101 @@
     <title>Paper detail</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" media="screen" href="{% static 'home/paperdetail.css' %}" />
+    <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
     <script>
-        // keep added gene in an array
         let genes = [];
+        let feedbackdata = new Object();
+        // keep added gene in an array
         let i = 0;
-        function addgene(){
-            genes[i++] = window.getSelection().toString();
-            alert(genes[i-1]);
+        function addEntity(){
+            let str = window.getSelection().toString();
+            if (str.length == 0)
+                return;
+            else
+                genes[i] = str;
+            let item = document.getElementById("addedentity");
+            let newdiv = document.createElement('div');
+            newdiv.className = 'newentity';
+            newdiv.style.display = 'flex';
+            // div to keep paragraph
+            let pdiv = document.createElement('div');
+            pdiv.style.flex = 1;
+            let para = document.createElement('p');
+            para.textContent = genes[i];
+            pdiv.appendChild(para);
+            // dropdown button using select tag
+            let sdiv = document.createElement('div');
+            sdiv.style.flex = 1;
+            sdiv.style.margin = 'auto';
+            let newselect = document.createElement('select');
+            newselect.id = 'entitytype' + i;
+            newselect.className = 'entityclass';
+            newselect.style.color = '#c0299f';
+            newselect.style.border = '1px #c0299f solid';
+            newselect.style.borderRadius = '3px';
+            newselect.style.backgroundColor = 'white';
+
+            let firstops = document.createElement('option');
+            firstops.textContent = 'Disease';
+            firstops.value = 1;
+            let secondops = document.createElement('option');
+            secondops.textContent = 'Gene';
+            secondops.value = 2;
+            let thirdops = document.createElement('option');
+            thirdops.textContent = 'Protein';
+            thirdops.value = 3;
+            newselect.appendChild(firstops);
+            newselect.appendChild(secondops);
+            newselect.appendChild(thirdops);
+            let newlabel = document.createElement('label');
+            newlabel.htmlFor = newselect;
+            newlabel.textContent = 'Entity Type';
+            newlabel.style.marginRight = '15px';
+            newlabel.style.color = '#191983';
+            // now append dropdown button
+            sdiv.appendChild(newlabel);
+            sdiv.appendChild(newselect);
+            // add pdiv and sdiv to newdiv
+            newdiv.appendChild(pdiv);
+            newdiv.appendChild(sdiv);
+            // add new div
+            item.appendChild(newdiv);
+            i += 1;
+        }
+        $(document).ready(function() {
+            // syntax: $('closest static tag').on('change','.targetclass' ,function(){});
+            // It took several hours to find this
+            // I was doing : $('.targetclass').on('change' ,function(){}); 
+            $('body').on('change click','.entityclass' ,function() { 
+                let index = parseInt(this.id.replace("entitytype",""));
+                let optionSelected = $(this).find("option:selected");
+                let valueSelected  = optionSelected.val();
+                feedbackdata[genes[index]] = valueSelected;
+            });
+        });
+        function sendFeedback(){
+            if(Object.keys(feedbackdata).length == 0) return;
+            feedbackdata = JSON.stringify(feedbackdata);
+            $.ajax({
+                type: "POST",
+                url: "/entity-feedback/",
+                data: {
+                    feedbackdata,
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function (d){
+                    feedbackdata = new Object();
+                    genes = [];
+                    alert(d.message);
+                }
+            });
         }
     </script>
 </head>
 <body>
+    <div style="float: right">
+        <button id="feedback-button" onclick="sendFeedback()">Send Feedback</button>
+    </div>
     <div>
         {% if title %}
             <h2>{{title}}</h2>
@@ -43,9 +127,18 @@
                 {% endif %}
             </div>
             <div class="feedback-container">
-                <h3>Do you see new genes ? </h3>
-                <div style="margin: auto">
-                    <button onclick="addgene()" id="feedback-button">Select the gene by mouse and click here</button>
+                <div style="display: flex">
+                    <div>
+                        <div class="question">Do you see new Entity ?</div>
+                        <div class="question">OR</div>
+                        <div class="question">wrong recognition ? </div>
+                    </div>
+                    <div style="margin: auto">
+                        <button onclick="addEntity()" id="feedback-button">Select the Entity by mouse and click here</button>
+                    </div>
+                </div>
+                <div id="addedentity">
+                    <h2>Entity you added :</h2>
                 </div>
             </div>
         </div>

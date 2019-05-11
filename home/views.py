@@ -6,6 +6,7 @@ from . import clusterer
 from . import postprocessing
 from . import mesh_explosion
 from . import biological_model
+from . import entity_recognition as enrecog
 from collections import Counter, OrderedDict
 from stop_words import get_stop_words  # use as : list(get_stop_words('en'))
 from nltk.corpus import stopwords      # use as : list(stopwords.words('english'))
@@ -240,30 +241,57 @@ def paperdetail(request,json_no,currindex,offset):
 	# open json
 	global query
 
+
+	abstracts = []
+	titles = []
+	mesh_terms = []
+	pmids = []
+	# get data folder path
 	dfet = mesh_explosion.DataForEachMeshTerm(None,None)
 	data_folder_name = dfet.get_data_foldername(query)
-	f = open(data_folder_name+"/"+str(json_no)+".json", 'r')
-	json_object = json.load(f)
-	f.close()
-	abstracts = json_object["abstracts"]
-	titles = json_object["titles"]
-	mesh_terms = json_object["meshterms"]
-	pmids = json_object["articleIds"]
-	# print(mesh_terms)
-	# tag gene in abstract
-	# for txt file
-	_filepointer = open("home/gene.txt",'r')
-	_genefile = _filepointer.read().split('\n')
+	with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
+		json_object = json.load(f)
+		abstracts = json_object["abstracts"]
+		titles = json_object["titles"]
+		mesh_terms = json_object["meshterms"]
+		pmids = json_object["articleIds"]
+	disease = []
+	gene = []
+	protein = []
+	# calling rule based entity recognition model
+	# disease,gene,protein = enrecog.entity_recog_nn(abs)
+	disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
+	if disease:
+		disease = list(disease)
+	if gene:
+		gene = list(gene)
+	if protein:
+		protein = list(protein)
+	if len(disease):
+		for rog in disease:
+			toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
+			if len(rog) > 2:
+				pattern = re.escape(rog)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	if len(protein):
+		for pro in protein:
+			toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
+			if len(pro) > 2:
+				pattern = re.escape(pro)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	if len(gene):
+		for _g in gene:
+			toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
+			if len(_g) > 2:
+				pattern = re.escape(_g)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
 
-	for gene in _genefile:
-		if len(gene) > 0:
-			toreplace = "<span class='highlight'>\g<0></span>"
-			pattern = re.compile(re.escape(gene), re.I)
-			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-
-	# path = ("home/" + self.filepath)
-	# wb = xlrd.open_workbook(path)
-	# sheet = wb.sheet_by_index(0)
 	context = {
 		'title' : titles[currindex + offset],
 		'abstract' : abstracts[currindex + offset],
@@ -440,6 +468,15 @@ def feedback(request):
 		return post(request,1,myobj)
 	else: # error reading json file
 		return HttpResponse("Error in reading json file")
+
+def entity_feedback(request):
+	try:
+		str_data = request.POST.get('feedbackdata',None)
+	except KeyError:
+		return JsonResponse({"message":"No feedback data found in the request object !!"})
+	data = json.loads(str_data)
+	print(data)
+	return JsonResponse({"message": "Thank you for your valuable feedback"})	
 
 def findalllines(abstracts):
 	abslist = []

@@ -13,6 +13,7 @@
         <link rel="stylesheet" type="text/css" href="{% static 'home/entities.css' %}">
         <script src="https://code.jquery.com/jquery-3.1.0.min.js"></script> 
         <script>
+            
             // handle radio button click
             $(document).ready(function(){
                 // handle view option
@@ -313,6 +314,92 @@
                     alert("Please select file of enter data !!");
                 }
             }
+            // function for entity tagg page
+            let genes = [];
+            let feedbackdata = new Object();
+            let i = 0;
+            function addEntity(index){
+                let str = window.getSelection().toString();
+                if (str.length == 0)
+                    return;
+                else
+                    genes[i] = str;
+                let item = document.getElementById("addedentity"+index);
+                let newdiv = document.createElement('div');
+                newdiv.className = 'newentity';
+                newdiv.style.display = 'flex';
+                // div to keep paragraph
+                let pdiv = document.createElement('div');
+                pdiv.style.flex = 1;
+                let para = document.createElement('p');
+                para.textContent = genes[i];
+                pdiv.appendChild(para);
+                // dropdown button using select tag
+                let sdiv = document.createElement('div');
+                sdiv.style.flex = 1;
+                sdiv.style.margin = 'auto';
+                let newselect = document.createElement('select');
+                newselect.id = 'entitytype' + i;
+                newselect.className = 'entityclass';
+                newselect.style.color = '#c0299f';
+                newselect.style.border = '1px #c0299f solid';
+                newselect.style.borderRadius = '3px';
+                newselect.style.backgroundColor = 'white';
+
+                let firstops = document.createElement('option');
+                firstops.textContent = 'Disease';
+                firstops.value = 1;
+                let secondops = document.createElement('option');
+                secondops.textContent = 'Gene';
+                secondops.value = 2;
+                let thirdops = document.createElement('option');
+                thirdops.textContent = 'Protein';
+                thirdops.value = 3;
+                newselect.appendChild(firstops);
+                newselect.appendChild(secondops);
+                newselect.appendChild(thirdops);
+                let newlabel = document.createElement('label');
+                newlabel.htmlFor = newselect;
+                newlabel.textContent = 'Entity Type';
+                newlabel.style.marginRight = '15px';
+                newlabel.style.color = '#191983';
+                // now append dropdown button
+                sdiv.appendChild(newlabel);
+                sdiv.appendChild(newselect);
+                // add pdiv and sdiv to newdiv
+                newdiv.appendChild(pdiv);
+                newdiv.appendChild(sdiv);
+                // add new div
+                item.appendChild(newdiv);
+                i += 1;
+            }
+            // handle dropdown button
+            $(document).ready(function() { 
+                $('body').on('change click', '.entityclass' ,function() {
+                    let index = parseInt(this.id.replace("entitytype",""));
+                    let optionSelected = $(this).find("option:selected");
+                    let valueSelected  = optionSelected.val();
+                    // console.log(index);
+                    // console.log(valueSelected);
+                    feedbackdata[genes[index]] = valueSelected;
+                });
+            });
+            function sendFeedback(){
+                feedbackdata = JSON.stringify(feedbackdata);
+                $.ajax({
+                    type: "POST",
+                    url: "/entity-feedback/",
+                    data: {
+                        feedbackdata,
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function (d){
+                        feedbackdata = new Object();
+                        genes = [];
+                        alert(d.message);
+                    }
+                });
+            }
         </script>
     </head>
     <body>
@@ -328,6 +415,9 @@
                 <input type="radio" class="custom-control-input" id="abstag-radio2" name="settag-name" value="2">
                 <label class="custom-control-label" for="abstag-radio2">Abstracts with Tagged Entities</label>
             </div>
+        </div>
+        <div style="float: right">
+            <button id = "feedback-button" onclick="sendFeedback()">Send Entity Feedback</button>
         </div>
         <!-- display: none is important -->
         <div id="outercontainer1" style="display: none">
@@ -439,11 +529,34 @@
         <div id="outercontainer2" style="display: none">
             {% if data %}
                 {% for title, abs, pmid in data %}
-                    <div class="titleabs">
-                        <h2 class="title">{{title | safe}}</h2>
-                        <span class="abs">{{abs | safe}}</span>
-                        <h2>PMID: {{pmid | safe}}</h2>
+                    <div>
+                        <h2>{{title | safe}}</h2>
+                        <div>
+                            <h3>Abstract</h3>
+                            <span class="abs">{{abs | safe}}</span>
+                        </div>
+                        <div class="bottom-container">
+                            <div class="mesh-container">
+                                <h3>PMID : {{pmid | safe}}</h3>
+                            </div>
+                            <div class="feedback-container">
+                                <div style="display: flex">
+                                    <div>
+                                        <div class="question">Do you see new Entity ?</div>
+                                        <div class="question">OR</div>
+                                        <div class="question">wrong recognition ? </div>
+                                    </div>
+                                    <div style="margin: auto">
+                                        <button onclick="addEntity('{{forloop.counter0}}')" id="feedback-button">Select the Entity by mouse and click here</button>
+                                    </div>
+                                </div>
+                                <div id="addedentity{{forloop.counter0}}">
+                                    <h2>Entity you added :</h2>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
                 {% endfor %}
             {% endif %}
         </div>

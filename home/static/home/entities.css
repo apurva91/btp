@@ -84,3 +84,23 @@ textarea {
 .gene-highlight {
     background-color: #66ff66;
 }
+.bottom-container {
+    display: flex;
+}
+.mesh-container {
+    flex: 1;
+}
+.feedback-container {
+    flex: 1;
+}
+#feedback-button {
+    border: none;
+    background: pink;
+    padding: 10px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+.question {
+    margin: 0px;
+    padding: 0px;
+}

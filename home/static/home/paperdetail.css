@@ -30,7 +30,6 @@ h3 {
 }
 .feedback-container {
     flex: 1;
-    display: flex;
 }
 #feedback-button {
     border: none;
@@ -38,4 +37,18 @@ h3 {
     padding: 10px;
     border-radius: 15px;
     cursor: pointer;
+}
+.question {
+    margin: 0px;
+    padding: 0px;
+}
+/* for annotation */
+.disease-highlight {
+    background-color: yellow;
+}
+.protein-highlight {
+    background-color: pink;
+}
+.gene-highlight {
+    background-color: #66ff66;
 }
