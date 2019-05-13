@@ -18,9 +18,9 @@
             </div>
         </div>
         <div>
-            {% if gene_arr %}
+            {% if data %}
                 <div id="gene-chart" style="width: 100%; height:100%"></div>
-                {{ gene_arr|json_script:"mydata" }}
+                {{ data|json_script:"mydata" }}
             {% else %}
                 {% if message %}
                     {{ message }}
@@ -36,7 +36,7 @@
             const diameter = 960,
                 format = d3.format(",d"),
                 color = d3.scaleOrdinal(d3.schemeCategory20c);
-
+            // bubble layout
             const bubble = d3.pack()
                 .size([diameter, diameter])
                 .padding(1.5);

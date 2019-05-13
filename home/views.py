@@ -193,16 +193,13 @@ def genecloud(request, json_no):
 	global query
 	global filepath
 
+	json_arr = cluster_by_jsonno(json_no)
 	pp = postprocessing.PostProcessing()
-	if query and filepath:
-		flag , gene_arr = pp.gene_cloud(json_no,filepath,query)
-		if flag:
-			return render(request, 'home/genecloud.html',{'gene_arr': gene_arr})
-		else:
-			return render(request, 'home/genecloud.html',{'gene_arr': None, 'message': "Wrong file path !"})
+	flag,data = pp.gene_cloud(query,json_arr)
+	if flag:
+		return render(request, 'home/genecloud.html',{'data': data})
 	else:
-		print("No query or no file path")
-		return HttpResponse("Something wrong with gene cloud!")
+		return HttpResponse('Something wrong !!'))
 
 def meshcloud(request, json_no):
 	global query
@@ -214,13 +211,15 @@ def meshcloud(request, json_no):
 		return HttpResponse("Something wrong with mesh cloud!")
 
 def entityrelation(request, json_no):
+	global query
+
 	json_arr = cluster_by_jsonno(json_no)
 	pp = postprocessing.PostProcessing()
-	flag,data = pp.find_entityrelation(json_arr)
+	flag,data = pp.entityrelation(query,json_arr)
 	if flag:
-		return render(request,'home/entityrelation.html',{'data':data})
+		return render(request,'home/multirelation.html',{"data": data})
 	else:
-		return HttpResponse("No entity relation found")
+		return HttpResponse("Something wrong !!")
 
 def entities(request,json_no,eoption):
 	global query

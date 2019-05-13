@@ -244,35 +244,139 @@ class PostProcessing():
         # print(root)
         return 1,root
 
-    def generelation(self,term_id,gene_file_name,search_term):
-        file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'
+    def entityrelation(self,query,json_arr):
         
-        with open(file_name, 'r') as f:
-            json_object = json.load(f)
+        if len(json_arr) < 0:
+            return 0,None
+        else:
+            all_json_abstracts = []
+            disease_obj = {}
+            gene_obj = {}
+            protein_obj = {}
+            for json_id in json_arr:
+                try:
+                    path = "home/data_folder/"+query+"/"+str(json_id)+'.json'
+                    print(path)
+                    with open(path,'r') as f:
+                        json_object = json.load(f)
+                        abstracts = json_object["abstracts"]
+                        all_json_abstracts.extend(abstracts)
+                        pmids = json_object["articleIds"]
+                        for index in range(0,len(abstracts)):
+                            diseases,genes,proteins = enrecog.entity_recog_rb(abstracts[index])
+                            for disease in diseases:
+                                try:
+                                    disease_obj[disease.lower()].append(int(pmids[index]))
+                                except KeyError:
+                                    disease_obj[disease.lower()] = []
+                                    disease_obj[disease.lower()].append(int(pmids[index]))
+                            for gene in genes:
+                                try:
+                                    gene_obj[gene.lower()].append(int(pmids[index]))
+                                except KeyError:
+                                    gene_obj[gene.lower()] = []
+                                    gene_obj[gene.lower()].append(int(pmids[index]))
+                            for protein in proteins:
+                                try:
+                                    protein_obj[protein.lower()].append(int(pmids[index]))
+                                except KeyError:
+                                    protein_obj[protein.lower()] = []
+                                    protein_obj[protein.lower()].append(int(pmids[index]))
+                            # break      
+                except FileNotFoundError:
+                    continue
+                # system can't handle all data : Need more RAM
+                break
+            # Make a long string of abstracts for counting entities
+            absstring = ""
+            for i in range(len(all_json_abstracts)):
+                absstring += " "
+                absstring += all_json_abstracts[i]
+            absstring = absstring.lower()
 
-        data_abstract = json_object["abstracts"]
-        data_title = json_object["titles"]
-        meshterms = json_object["meshterms"]
+            # remove some objects 
+            key_list = list(disease_obj.keys())
+            for key in key_list:
+                occur = absstring.count(key.lower())
+                if occur < 5:
+                    del(disease_obj[key])
+            key_list = list(gene_obj.keys())
+            for key in key_list:
+                occur = absstring.count(key.lower())
+                if occur < 5:
+                    del(gene_obj[key])
+            key_list = list(protein_obj.keys())
+            for key in key_list:
+                occur = absstring.count(key.lower())
+                if occur < 5:
+                    del(protein_obj[key])
 
-        abstracts = ""
-        for _i in range(0,len(data_abstract)):
-            abstracts = abstracts+data_title[_i]+data_abstract[_i]
-            for _j in range(0, len(meshterms[_i])):
-                abstracts += meshterms[_i][_j]
+            # protein-protein relation
+            p_prelation = {} 
+            p_pnodes = {}
+            p_plinks = {}
+            findex = 0
+            for fkey, fvalue in protein_obj.items():
+                p_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "links": []}
+                p_plinks[fkey.lower()] = {"source": findex,"target": []}
+                sindex = 0
+                for skey, svalue in protein_obj.items():
+                    if sindex > findex: # taking care of 1-2 and 2-1 cases
+                        common = set(fvalue).intersection(set(svalue))
+                        if len(common) > 0:
+                            p_pnodes[fkey.lower()]["links"].append(sindex)
+                            p_plinks[fkey.lower()]["target"].append(sindex)
+                    sindex += 1
+                findex += 1
+            for key,val in p_pnodes.items():
+                try:
+                    p_prelation["nodes"].append(val)
+                except KeyError:
+                    p_prelation["nodes"] = []
+                    p_prelation["nodes"].append(val)
+            p_prelation["links"] = []
+            for key, val in p_plinks.items():
+                try:                    
+                    for target in val["target"]:
+                        p_prelation["links"].append({"source": val["source"],"target": target})
+                except KeyError:
+                    continue
 
-        content = abstracts.replace('\n', ' ')
-        content = content.replace('.', ' ')
-        content = content.replace(',', ' ')
-        content = content.lower()
+            # gene-protein relation
+            g_prelation = {} 
+            g_pnodes = {}
+            g_plinks = {}
+            findex = 0
+            for fkey, fvalue in gene_obj.items():
+                g_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "links": []}
+                g_plinks[fkey.lower()] = {"source": findex,"target": []}
+                sindex = 0
+                for skey, svalue in protein_obj.items():
+                    common = set(fvalue).intersection(set(svalue))
+                    if len(common) > 0:
+                        g_pnodes[fkey.lower()]["links"].append(sindex)
+                        g_plinks[fkey.lower()]["target"].append(sindex)
+                    sindex += 1
+                findex += 1
+            for key,val in g_pnodes.items():
+                try:
+                    g_prelation["nodes"].append(val)
+                except KeyError:
+                    g_prelation["nodes"] = []
+                    g_prelation["nodes"].append(val)
+            g_prelation["links"] = []
+            for key, val in g_plinks.items():
+                try:                    
+                    for target in val["target"]:
+                        g_prelation["links"].append({"source": val["source"],"target": target})
+                except KeyError:
+                    continue
+        
+            data ={}
+            data["pprelation"] = p_prelation
+            data["gprelation"] = g_prelation
 
-        data = content.split()
-
-        filepointer = open(gene_file_name,'r')
-        genefile_arr = filepointer.read().lower().split('\n')
-
-        gene_dict = {}
-        for _i in range(0, len(genefile_arr)):
-            new_list = []
+            return 1,data
 
     def get_entities(self,query,json_arr,option):
         if len(json_arr) < 0:

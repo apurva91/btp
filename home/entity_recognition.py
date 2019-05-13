@@ -14,9 +14,9 @@ def entity_recog_nn(text):
 	doc2 = nlp2(text)
 	doc3 = nlp3(text)
 	
-	protein=set()
-	gene=set()
-	disease=set()
+	protein = set()
+	gene = set()
+	disease = set()
 
 	for entity in doc1.ents:
 		if entity.label_=="PROTEIN":
@@ -47,7 +47,6 @@ def entity_recog_rb(text):
 				t.append(r[i])
 		temp.append(t)
 
-	# print(temp)
 	X = [sent2features(s) for s in temp]
 
 	loaded_model1 = pickle.load(open('protein_model.pkl', 'rb'))
@@ -65,20 +64,16 @@ def entity_recog_rb(text):
 	prot=set()
 	ge=set()
 	dis=set()
-	# print(y1)
-	# print(y2)
-	# print(y3)
 
-
-	
-	n=-1
+	n = -1
 	for i in range(len(y1)):
 		for j in range(len(y1[i])):
 			if y1[i][j]=='B-Protein':
 				protein.append(temp[i][j]+' ')
 				n += 1
 			elif y1[i][j]=='I-Protein':
-				protein[n] += temp[i][j]
+				if n != -1:
+					protein[n] += temp[i][j] + ' '
 
 	for p in protein:
 		prot.add(p)
@@ -92,11 +87,13 @@ def entity_recog_rb(text):
 				n += 1
 				flag=1
 			elif y2[i][j]=='I-Gene_or_gene_product':
-				gene[n] += temp[i][j]
+				if n != -1:
+					gene[n] += temp[i][j] + ' '
 			elif flag and gene[n] in protein:
-				gene.remove(gene[n])
-				n -= 1
-				flag=0
+				if n != -1:
+					gene.remove(gene[n])
+					n -= 1
+					flag=0
 
 	for g in gene:
 		ge.add(g)
@@ -108,7 +105,8 @@ def entity_recog_rb(text):
 				disease.append(temp[i][j]+' ')
 				n += 1
 			elif y3[i][j]=='I-Disease':
-				disease[n] += temp[i][j]
+				if n != -1:
+					disease[n] += temp[i][j] + ' '
 
 	for d in disease:
 		dis.add(d)
