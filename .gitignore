@@ -6,3 +6,4 @@ home/*.js
 home/static/home/*.js
 word_representation
 concept
+*.xlsx

@@ -21,20 +21,32 @@
     <script>
         $(document).ready(function(){
             // handle view option
+            // default case
             $("#p-prelation").show();
+            $(document).find("svg").remove()
+            d3func(1);
             $("input[name$='relation-name']").click(function(){
                 let val = $(this).val();
                 if (parseInt(val) == 1){
                     $("#g-prelation").hide();
+                    $("#d-prelation").hide();
                     $("#p-prelation").show();
                     $(document).find("svg").remove()
                     d3func(1);
                 }
-                else{
+                else if(parseInt(val) == 2){
                     $("#p-prelation").hide();
+                    $("#d-prelation").hide();
                     $("#g-prelation").show();
                     $(document).find("svg").remove()
                     d3func(2);
+                }
+                else{
+                    $("#p-prelation").hide();
+                    $("#g-prelation").hide();
+                    $("#d-prelation").show();
+                    $(document).find("svg").remove()
+                    d3func(3);
                 }
             });
         });
@@ -42,26 +54,35 @@
 </head>
 
 <body>
-    <div style="display: flex; flex-direction: column">
-        <div id="p-prelation" style="display: none" style="flex: 3">
-            {% if data.pprelation %}
-                {{ data.pprelation|json_script:"ppdata" }}
-            {% endif %}
-        </div>
-        <div id="g-prelatioin" style="display: none" style="flex: 3">
-            {% if data.gprelation %}
-                {{ data.gprelation|json_script:"gpdata" }}
-            {% endif %}
-        </div>
-        <div style="flex: 1">
+    <div>
+        <div style="display: flex; margin-left: 10px;">
             <div class="custom-control custom-radio">
                 <input type="radio" class="custom-control-input" id="pp-radio1" name="relation-name" value="1" checked> 
                 <label class="custom-control-label" for="pp-radio1">Protein-Protein</label>
             </div>
-            <div class="custom-control custom-radio">
+            <div class="custom-control custom-radio" style="margin-left: 10px;">
                 <input type="radio" class="custom-control-input" id="gp-radio2" name="relation-name" value="2">
                 <label class="custom-control-label" for="gp-radio2">Gene-Protein</label>
             </div>
+            <div class="custom-control custom-radio" style="margin-left: 10px;">
+                <input type="radio" class="custom-control-input" id="gp-radio3" name="relation-name" value="3">
+                <label class="custom-control-label" for="gp-radio3">Disease-Protein</label>
+            </div>
+        </div>
+        <div id="p-prelation" style="display: none">
+            {% if data.pprelation %}
+                {{ data.pprelation|json_script:"ppdata" }}
+            {% endif %}
+        </div>
+        <div id="g-prelatioin" style="display: none">
+            {% if data.gprelation %}
+                {{ data.gprelation|json_script:"gpdata" }}
+            {% endif %}
+        </div>
+        <div id="d-prelatioin" style="display: none">
+            {% if data.dprelation %}
+                {{ data.dprelation|json_script:"dpdata" }}
+            {% endif %}
         </div>
     </div>
     <script>
@@ -72,6 +93,9 @@
             }
             else if(option == 2){
                 graph = JSON.parse(document.getElementById('gpdata').textContent);
+            }
+            else if(option == 3){
+                graph = JSON.parse(document.getElementById('dpdata').textContent);
             }
             console.log(graph);
             var w = window.innerWidth;
@@ -110,6 +134,7 @@
             var nominal_text_size = 10;
             var max_text_size = 24;
             var nominal_stroke = 1.5;
+            var line_stroke = 1;
             var max_stroke = 4.5;
             var max_base_node_size = 36;
             var min_zoom = 0.1;
@@ -146,7 +171,7 @@
             .data(graph.links)
             .enter().append("line")
             .attr("class", "link")
-            .style("stroke-width",nominal_stroke)
+            .style("stroke-width",line_stroke)
     
             var node = g.selectAll(".node")
             .data(graph.nodes)
@@ -172,8 +197,9 @@
             var circle = node.append("path")
                 .attr("d", d3.svg.symbol()
                     .size(function(d) { return Math.PI*Math.pow(size(d.size)||nominal_base_node_size,2); })
-                    // .type(function(d) { return d.type; })
+                    .type(function(d) { return d.type; })
                 )
+                .attr("r",10)
                 .style(tocolor, "pink")
                 .style("stroke-width", nominal_stroke)
                 .style(towhite, "grey");

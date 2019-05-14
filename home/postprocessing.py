@@ -103,7 +103,7 @@ class PostProcessing():
             store[value] = 1
         return
 
-    def gene_cloud(self,term_id,gene_file_name,search_term):
+    def gene_cloud_dictionary_based(self,term_id,gene_file_name,search_term):
         print("Gene cloud called..")
         file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'
         try:
@@ -165,52 +165,119 @@ class PostProcessing():
         # close file
 
         # For xlsx file
-        path = ("home/gene_list.xlsx")
-        wb = xlrd.open_workbook(path)
-        sheet = wb.sheet_by_index(0)
-        for row in range(0,sheet.nrows):
-            for col in range(0,sheet.ncols):
-                if row != 0 and col!=0 and col != 1 and col!=8 and col!=9 and col!=10 and col!=11 and col!=12 and sheet.cell_value(row,col):
-                    if sheet.cell_value(row,col):
-                        gene_obj = {}
-                        gene_obj["index"] = c
-                        c = c + 1
-                        gene = str(sheet.cell_value(row,col))
-                        match = 0
-                        for obj in children:
-                            if obj["name"] == gene:
-                                match = 1
-                                break
-                        if match == 0:
-                            gene_obj["name"] = gene
-                            gene_obj["count"] = data.count(gene)
-                            gene_obj["value"] = gene_obj["count"]
-                            alltitle = []
-                            allpmids = []
-                            for _i in range(0, len(data_abstract)):
-                                if data_abstract[_i].find(gene) >= 0:
-                                    alltitle.append(data_title[_i])
-                                    allpmids.append(data_pmids[_i])
-                                elif data_title[_i].find(gene) >= 0:
-                                    alltitle.append(data_title[_i])
-                                    allpmids.append(data_pmids[_i])
-                            gene_obj["children"] = None
-                            gene_obj["title"] = alltitle
-                            gene_obj["pmids"] = allpmids
-                            children.append(gene_obj)
-                else:
-                    if c > 10000:
-                        break
-            if c > 10000:
-                break
-        root["name"] = "Gene cloud"
-        root["value"] = 1000
-        root["count"] = 1
-        root["title"] = "Its root"
-        root["pmids"] = 0
-        root["children"] = children
+        # path = ("home/gene_list.xlsx")
+        # wb = xlrd.open_workbook(path)
+        # sheet = wb.sheet_by_index(0)
+        # for row in range(0,sheet.nrows):
+        #     for col in range(0,sheet.ncols):
+        #         if row != 0 and col!=0 and col != 1 and col!=8 and col!=9 and col!=10 and col!=11 and col!=12 and sheet.cell_value(row,col):
+        #             if sheet.cell_value(row,col):
+        #                 gene_obj = {}
+        #                 gene_obj["index"] = c
+        #                 c = c + 1
+        #                 gene = str(sheet.cell_value(row,col))
+        #                 match = 0
+        #                 for obj in children:
+        #                     if obj["name"] == gene:
+        #                         match = 1
+        #                         break
+        #                 if match == 0:
+        #                     gene_obj["name"] = gene
+        #                     gene_obj["count"] = data.count(gene)
+        #                     gene_obj["value"] = gene_obj["count"]
+        #                     alltitle = []
+        #                     allpmids = []
+        #                     for _i in range(0, len(data_abstract)):
+        #                         if data_abstract[_i].find(gene) >= 0:
+        #                             alltitle.append(data_title[_i])
+        #                             allpmids.append(data_pmids[_i])
+        #                         elif data_title[_i].find(gene) >= 0:
+        #                             alltitle.append(data_title[_i])
+        #                             allpmids.append(data_pmids[_i])
+        #                     gene_obj["children"] = None
+        #                     gene_obj["title"] = alltitle
+        #                     gene_obj["pmids"] = allpmids
+        #                     children.append(gene_obj)
+        #         else:
+        #             if c > 10000:
+        #                 break
+        #     if c > 10000:
+        #         break
+        # root["name"] = "Gene cloud"
+        # root["value"] = 1000
+        # root["count"] = 1
+        # root["title"] = "Its root"
+        # root["pmids"] = 0
+        # root["children"] = children
         # print(root)
-        return 1,root
+        # return 1,root
+
+    def gene_cloud(self,query,json_arr):
+        if len(json_arr) < 0:
+            return 0,None
+        else:
+            all_json_abstracts = []
+            gene_objects = {}
+            for json_id in json_arr:
+                try:
+                    path = "home/data_folder/"+query+"/"+str(json_id)+'.json'
+                    with open(path,'r') as f:
+                        json_object = json.load(f)
+                        abstracts = json_object["abstracts"]
+                        all_json_abstracts.extend(abstracts)
+                        pmids = json_object["articleIds"]
+                        titles = json_object["titles"]
+                        for index in range(0,len(abstracts)):
+                            diseases,genes,proteins = enrecog.entity_recog_rb(abstracts[index])
+                            for gene in genes:
+                                try:
+                                    gene_objects[gene.lower()]["title"].append(titles[index])
+                                    gene_objects[gene.lower()]["pmids"].append(pmids[index])
+                                except KeyError:
+                                    obj = {}
+                                    obj["name"] = gene
+                                    obj["children"] = None
+                                    obj["title"] = []
+                                    obj["pmids"] = []
+                                    obj["title"].append(titles[index])
+                                    obj["pmids"].append(pmids[index])
+                                    gene_objects[gene.lower()] = obj
+                            # break      
+                except FileNotFoundError:
+                    continue
+                break
+
+            # Make a long string of abstracts for counting entities
+            absstring = ""
+            for i in range(len(all_json_abstracts)):
+                absstring += " "
+                absstring += all_json_abstracts[i]
+            absstring = absstring.lower()
+            # filter out some genes and add count value
+            key_list = list(gene_objects.keys())
+            for key in key_list:
+                occur = absstring.count(key.lower())
+                if occur < 5 or len(key) < 4:
+                    # print("deleted: ",key)
+                    del(gene_objects[key])
+                else:
+                    gene_objects[key.lower()]["value"] = occur 
+            # create children array
+            children = []
+            for key, value in gene_objects.items():
+                children.append(value)
+            # create root node
+            root = {}
+            root["name"] = "Gene cloud"
+            root["value"] = 1000
+            root["title"] = "Its root"
+            root["pmids"] = []
+            root["children"] = children
+            if len(children) > 0:
+                return 1,root
+            else:
+                print("No genes found !!")
+                return 0,None
 
     def mesh_cloud(self,term_id,search_term):
         print("Mesh cloud called..")
@@ -243,7 +310,7 @@ class PostProcessing():
         root["children"] = children
         # print(root)
         return 1,root
-
+    
     def entityrelation(self,query,json_arr):
         
         if len(json_arr) < 0:
@@ -266,22 +333,28 @@ class PostProcessing():
                             diseases,genes,proteins = enrecog.entity_recog_rb(abstracts[index])
                             for disease in diseases:
                                 try:
-                                    disease_obj[disease.lower()].append(int(pmids[index]))
+                                    disease_obj[disease.lower()]["neighbour"].append(int(pmids[index]))
                                 except KeyError:
-                                    disease_obj[disease.lower()] = []
-                                    disease_obj[disease.lower()].append(int(pmids[index]))
+                                    disease_obj[disease.lower()] = {} # needed as multi level initialization not 
+                                    disease_obj[disease.lower()]["neighbour"] = []
+                                    disease_obj[disease.lower()]["neighbour"].append(int(pmids[index]))
+                                    disease_obj[disease.lower()]["type"] = "disease"
                             for gene in genes:
                                 try:
-                                    gene_obj[gene.lower()].append(int(pmids[index]))
+                                    gene_obj[gene.lower()]["neighbour"].append(int(pmids[index]))
                                 except KeyError:
-                                    gene_obj[gene.lower()] = []
-                                    gene_obj[gene.lower()].append(int(pmids[index]))
+                                    gene_obj[gene.lower()] = {}
+                                    gene_obj[gene.lower()]["neighbour"] = []
+                                    gene_obj[gene.lower()]["neighbour"].append(int(pmids[index]))
+                                    gene_obj[gene.lower()]["type"] = "gene"
                             for protein in proteins:
                                 try:
-                                    protein_obj[protein.lower()].append(int(pmids[index]))
+                                    protein_obj[protein.lower()]["neighbour"].append(int(pmids[index]))
                                 except KeyError:
-                                    protein_obj[protein.lower()] = []
-                                    protein_obj[protein.lower()].append(int(pmids[index]))
+                                    protein_obj[protein.lower()] = {}
+                                    protein_obj[protein.lower()]["neighbour"] = []
+                                    protein_obj[protein.lower()]["neighbour"].append(int(pmids[index]))
+                                    protein_obj[protein.lower()]["type"] = "protein"
                             # break      
                 except FileNotFoundError:
                     continue
@@ -316,13 +389,14 @@ class PostProcessing():
             p_pnodes = {}
             p_plinks = {}
             findex = 0
+            # create nodes array
             for fkey, fvalue in protein_obj.items():
-                p_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "links": []}
+                p_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "type": "circle","links": []}
                 p_plinks[fkey.lower()] = {"source": findex,"target": []}
                 sindex = 0
                 for skey, svalue in protein_obj.items():
                     if sindex > findex: # taking care of 1-2 and 2-1 cases
-                        common = set(fvalue).intersection(set(svalue))
+                        common = set(fvalue["neighbour"]).intersection(set(svalue["neighbour"]))
                         if len(common) > 0:
                             p_pnodes[fkey.lower()]["links"].append(sindex)
                             p_plinks[fkey.lower()]["target"].append(sindex)
@@ -334,6 +408,7 @@ class PostProcessing():
                 except KeyError:
                     p_prelation["nodes"] = []
                     p_prelation["nodes"].append(val)
+            # create links array
             p_prelation["links"] = []
             for key, val in p_plinks.items():
                 try:                    
@@ -346,18 +421,28 @@ class PostProcessing():
             g_prelation = {} 
             g_pnodes = {}
             g_plinks = {}
+            # create single object
+            extended_geneobj = gene_obj 
+            extended_geneobj.update(protein_obj)
+
             findex = 0
-            for fkey, fvalue in gene_obj.items():
+            for fkey, fvalue in extended_geneobj.items():
                 g_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "links": []}
+                if fvalue["type"] == "protein":
+                    g_pnodes[fkey.lower()]["type"] = "circle"
+                else:
+                    g_pnodes[fkey.lower()]["type"] = "square"
                 g_plinks[fkey.lower()] = {"source": findex,"target": []}
                 sindex = 0
-                for skey, svalue in protein_obj.items():
-                    common = set(fvalue).intersection(set(svalue))
-                    if len(common) > 0:
-                        g_pnodes[fkey.lower()]["links"].append(sindex)
-                        g_plinks[fkey.lower()]["target"].append(sindex)
+                for skey, svalue in extended_geneobj.items():
+                    if fvalue["type"] != svalue["type"]: # only gene to protein 
+                        common = set(fvalue["neighbour"]).intersection(set(svalue["neighbour"]))
+                        if len(common) > 0:
+                            g_pnodes[fkey.lower()]["links"].append(sindex)
+                            g_plinks[fkey.lower()]["target"].append(sindex)
                     sindex += 1
                 findex += 1
+            # add nodes to list
             for key,val in g_pnodes.items():
                 try:
                     g_prelation["nodes"].append(val)
@@ -371,10 +456,51 @@ class PostProcessing():
                         g_prelation["links"].append({"source": val["source"],"target": target})
                 except KeyError:
                     continue
-        
+
+            # disease protein relation
+            d_prelation = {} 
+            d_pnodes = {}
+            d_plinks = {}
+            # create single object
+            extended_diseaseobj = disease_obj 
+            extended_diseaseobj.update(protein_obj)
+
+            findex = 0
+            for fkey, fvalue in extended_diseaseobj.items():
+                d_pnodes[fkey.lower()] = {"index": findex, "label": fkey.lower(), "links": []}
+                if fvalue["type"] == "protein":
+                    d_pnodes[fkey.lower()]["type"] = "circle"
+                else:
+                    d_pnodes[fkey.lower()]["type"] = "square"
+                d_plinks[fkey.lower()] = {"source": findex,"target": []}
+                sindex = 0
+                for skey, svalue in extended_diseaseobj.items():
+                    if fvalue["type"] != svalue["type"]: # only gene to protein 
+                        common = set(fvalue["neighbour"]).intersection(set(svalue["neighbour"]))
+                        if len(common) > 0:
+                            d_pnodes[fkey.lower()]["links"].append(sindex)
+                            d_plinks[fkey.lower()]["target"].append(sindex)
+                    sindex += 1
+                findex += 1
+            # add nodes to list
+            for key,val in d_pnodes.items():
+                try:
+                    d_prelation["nodes"].append(val)
+                except KeyError:
+                    d_prelation["nodes"] = []
+                    d_prelation["nodes"].append(val)
+            d_prelation["links"] = []
+            for key, val in d_plinks.items():
+                try:                    
+                    for target in val["target"]:
+                        d_prelation["links"].append({"source": val["source"],"target": target})
+                except KeyError:
+                    continue
+            # Final data for visualization using d3js
             data ={}
             data["pprelation"] = p_prelation
             data["gprelation"] = g_prelation
+            data["dprelation"] = d_prelation
 
             return 1,data
 
@@ -452,4 +578,3 @@ class PostProcessing():
             else:
                 return 0,None
                             
-

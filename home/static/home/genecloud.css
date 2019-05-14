@@ -2,6 +2,14 @@
 text {
     font: 10px sans-serif;
 }
+h2 {
+    color: #191983;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
+h3 {
+    color: #c0299f;
+    font-family:'Segoe UI',Arial,Helvetica,Sans-Serif;
+}
 /* The Modal (background) */
 .modal {
     display: none; /* Hidden by default */

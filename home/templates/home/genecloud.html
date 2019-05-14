@@ -14,7 +14,7 @@
         <div id="myModal" class="modal">
             <div id="modal-container" class="modal-content">
                 <span class="close">&times;</span>
-                <div id="modal-content"></div>
+                <div id="content"></div>
             </div>
         </div>
         <div>
@@ -77,17 +77,23 @@
                 // First create the div element since on close we will remove it
                 let container = document.getElementById('modal-container');
                 let modaldiv = document.createElement("div");
-                modaldiv.setAttribute("id","modal-content");
+                modaldiv.setAttribute("id","content");
                 container.appendChild(modaldiv);
                 // Get the modal
                 let modal = document.getElementById('myModal');
-                let modalcontent = document.getElementById('modal-content');
+                let modalcontent = document.getElementById('content');
                 if(d.data.title.length){
                     for(_i = 0; _i < d.data.title.length; _i++){
                         let mydiv = document.createElement("div");
                         let title = document.createElement("h2");
+                        title.style.color = "#191983";
+                        title.style.fontFamily = "'Segoe UI',Arial,Helvetica,Sans-Serif";
+                        title.style.fontSize = "1.2em";
                         let titletext = document.createTextNode(d.data.title[_i]);
-                        let pmid = document.createElement("span");
+                        let pmid = document.createElement("h3");
+                        pmid.style.color = "pink";
+                        pmid.style.fontSize = "1.0em";
+                        pmid.style.fontFamily = "'Segoe UI',Arial,Helvetica,Sans-Serif";
                         let pmidtext = document.createTextNode("PMID: " + d.data.pmids[_i]);
                         title.appendChild(titletext);
                         pmid.appendChild(pmidtext);

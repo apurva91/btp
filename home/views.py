@@ -7,6 +7,7 @@ from . import postprocessing
 from . import mesh_explosion
 from . import biological_model
 from . import entity_recognition as enrecog
+from . import relation_data_prepare as relation
 from collections import Counter, OrderedDict
 from stop_words import get_stop_words  # use as : list(get_stop_words('en'))
 from nltk.corpus import stopwords      # use as : list(stopwords.words('english'))
@@ -28,10 +29,6 @@ stop_words = []
 mesh_terms = []
 
 def index(request):
-	global stop_words
-	# get stopwords into an list
-	f = open("home/english",'r')
-	stop_words = f.read().split()
 	return render(request,'home/index.html')
     
 def post(request,isfeedback = None,feedobj = None):
@@ -199,7 +196,7 @@ def genecloud(request, json_no):
 	if flag:
 		return render(request, 'home/genecloud.html',{'data': data})
 	else:
-		return HttpResponse('Something wrong !!'))
+		return HttpResponse('Something wrong : check postprocessing.py')
 
 def meshcloud(request, json_no):
 	global query
@@ -237,70 +234,73 @@ def entities(request,json_no,eoption):
 		return HttpResponse("No entities")
 
 def paperdetail(request,json_no,currindex,offset):
-	# open json
-	global query
+	# # open json
+	# global query
 
 
-	abstracts = []
-	titles = []
-	mesh_terms = []
-	pmids = []
-	# get data folder path
-	dfet = mesh_explosion.DataForEachMeshTerm(None,None)
-	data_folder_name = dfet.get_data_foldername(query)
-	with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
-		json_object = json.load(f)
-		abstracts = json_object["abstracts"]
-		titles = json_object["titles"]
-		mesh_terms = json_object["meshterms"]
-		pmids = json_object["articleIds"]
-	disease = []
-	gene = []
-	protein = []
-	# calling rule based entity recognition model
-	# disease,gene,protein = enrecog.entity_recog_nn(abs)
-	disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
-	if disease:
-		disease = list(disease)
-	if gene:
-		gene = list(gene)
-	if protein:
-		protein = list(protein)
-	if len(disease):
-		for rog in disease:
-			toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
-			if len(rog) > 2:
-				pattern = re.escape(rog)
-				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
-	if len(protein):
-		for pro in protein:
-			toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
-			if len(pro) > 2:
-				pattern = re.escape(pro)
-				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
-	if len(gene):
-		for _g in gene:
-			toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
-			if len(_g) > 2:
-				pattern = re.escape(_g)
-				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	# abstracts = []
+	# titles = []
+	# mesh_terms = []
+	# pmids = []
+	# # get data folder path
+	# dfet = mesh_explosion.DataForEachMeshTerm(None,None)
+	# data_folder_name = dfet.get_data_foldername(query)
+	# with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
+	# 	json_object = json.load(f)
+	# 	abstracts = json_object["abstracts"]
+	# 	titles = json_object["titles"]
+	# 	mesh_terms = json_object["meshterms"]
+	# 	pmids = json_object["articleIds"]
+	# disease = []
+	# gene = []
+	# protein = []
+	# # calling rule based entity recognition model
+	# # disease,gene,protein = enrecog.entity_recog_nn(abs)
+	# disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
+	# if disease:
+	# 	disease = list(disease)
+	# if gene:
+	# 	gene = list(gene)
+	# if protein:
+	# 	protein = list(protein)
+	# if len(disease):
+	# 	for rog in disease:
+	# 		toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
+	# 		if len(rog) > 2:
+	# 			pattern = re.escape(rog)
+	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	# if len(protein):
+	# 	for pro in protein:
+	# 		toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
+	# 		if len(pro) > 2:
+	# 			pattern = re.escape(pro)
+	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	# if len(gene):
+	# 	for _g in gene:
+	# 		toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
+	# 		if len(_g) > 2:
+	# 			pattern = re.escape(_g)
+	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
 
-	context = {
-		'title' : titles[currindex + offset],
-		'abstract' : abstracts[currindex + offset],
-		'pmid' : pmids[currindex + offset],
-		'meshterm' : mesh_terms[currindex + offset],
-		'json_no': json_no,
-		'index' : currindex + offset
-	}
+	# context = {
+	# 	'title' : titles[currindex + offset],
+	# 	'abstract' : abstracts[currindex + offset],
+	# 	'pmid' : pmids[currindex + offset],
+	# 	'meshterm' : mesh_terms[currindex + offset],
+	# 	'json_no': json_no,
+	# 	'index' : currindex + offset
+	# }
 
-	return render(request,'home/paperdetail.html',context)
+	# return render(request,'home/paperdetail.html',context)
+	relation.data_prepare()
+	return HttpResponse("called relation")
+
 
 def seesimilar(request,json_no,currindex,offset):
 	return HttpResponse("From seesimilar")
