@@ -234,72 +234,72 @@ def entities(request,json_no,eoption):
 		return HttpResponse("No entities")
 
 def paperdetail(request,json_no,currindex,offset):
-	# # open json
-	# global query
+	# open json
+	global query
 
 
-	# abstracts = []
-	# titles = []
-	# mesh_terms = []
-	# pmids = []
-	# # get data folder path
-	# dfet = mesh_explosion.DataForEachMeshTerm(None,None)
-	# data_folder_name = dfet.get_data_foldername(query)
-	# with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
-	# 	json_object = json.load(f)
-	# 	abstracts = json_object["abstracts"]
-	# 	titles = json_object["titles"]
-	# 	mesh_terms = json_object["meshterms"]
-	# 	pmids = json_object["articleIds"]
-	# disease = []
-	# gene = []
-	# protein = []
-	# # calling rule based entity recognition model
-	# # disease,gene,protein = enrecog.entity_recog_nn(abs)
-	# disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
-	# if disease:
-	# 	disease = list(disease)
-	# if gene:
-	# 	gene = list(gene)
-	# if protein:
-	# 	protein = list(protein)
-	# if len(disease):
-	# 	for rog in disease:
-	# 		toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
-	# 		if len(rog) > 2:
-	# 			pattern = re.escape(rog)
-	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
-	# if len(protein):
-	# 	for pro in protein:
-	# 		toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
-	# 		if len(pro) > 2:
-	# 			pattern = re.escape(pro)
-	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
-	# if len(gene):
-	# 	for _g in gene:
-	# 		toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
-	# 		if len(_g) > 2:
-	# 			pattern = re.escape(_g)
-	# 			abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
-	# 			titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
-	# 			# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	abstracts = []
+	titles = []
+	mesh_terms = []
+	pmids = []
+	# get data folder path
+	dfet = mesh_explosion.DataForEachMeshTerm(None,None)
+	data_folder_name = dfet.get_data_foldername(query)
+	with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
+		json_object = json.load(f)
+		abstracts = json_object["abstracts"]
+		titles = json_object["titles"]
+		mesh_terms = json_object["meshterms"]
+		pmids = json_object["articleIds"]
+	disease = []
+	gene = []
+	protein = []
+	# calling rule based entity recognition model
+	# disease,gene,protein = enrecog.entity_recog_nn(abs)
+	disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
+	if disease:
+		disease = list(disease)
+	if gene:
+		gene = list(gene)
+	if protein:
+		protein = list(protein)
+	if len(disease):
+		for rog in disease:
+			toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
+			if len(rog) > 2:
+				pattern = re.escape(rog)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	if len(protein):
+		for pro in protein:
+			toreplace = "<span class='protein-highlight' data-toggle=\"tooltip\" title=\"Protein\">\g<0></span>"
+			if len(pro) > 2:
+				pattern = re.escape(pro)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
+	if len(gene):
+		for _g in gene:
+			toreplace = "<span class='gene-highlight' data-toggle=\"tooltip\" title=\"Gene\">\g<0></span>"
+			if len(_g) > 2:
+				pattern = re.escape(_g)
+				abstracts[currindex+offset] = re.sub(pattern,toreplace,abstracts[currindex+offset])
+				titles[currindex+offset] = re.sub(pattern,toreplace,titles[currindex+offset])
+				# mesh_terms[currindex+offset] = re.sub(pattern,toreplace,mesh_terms[currindex+offset])
 
-	# context = {
-	# 	'title' : titles[currindex + offset],
-	# 	'abstract' : abstracts[currindex + offset],
-	# 	'pmid' : pmids[currindex + offset],
-	# 	'meshterm' : mesh_terms[currindex + offset],
-	# 	'json_no': json_no,
-	# 	'index' : currindex + offset
-	# }
+	context = {
+		'title' : titles[currindex + offset],
+		'abstract' : abstracts[currindex + offset],
+		'pmid' : pmids[currindex + offset],
+		'meshterm' : mesh_terms[currindex + offset],
+		'json_no': json_no,
+		'index' : currindex + offset
+	}
 
-	# return render(request,'home/paperdetail.html',context)
-	relation.data_prepare()
-	return HttpResponse("called relation")
+	return render(request,'home/paperdetail.html',context)
+	# relation.data_prepare()
+	# return HttpResponse("called relation")
 
 
 def seesimilar(request,json_no,currindex,offset):

@@ -90,7 +90,7 @@ textarea {
 .mesh-container {
     flex: 1;
 }
-.feedback-container {
+#feedback-container {
     flex: 1;
 }
 #feedback-button {
@@ -103,4 +103,7 @@ textarea {
 .question {
     margin: 0px;
     padding: 0px;
+    color: #4e1f7a;
+    font: 1.2em 'Segoe UI',Arial,Helvetica,Sans-Serif;   
+    
 }
