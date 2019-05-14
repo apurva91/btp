@@ -137,7 +137,6 @@ def get(request, json_no):
 			'query' : query,
 			'topdocs' : topdocs,
 			'topmesh' : topmesh,
-			# 'tags' : tags,
 			'currindex' : currindex,
 			'previndex' : previndex,
 			'nextindex' : nextindex,
@@ -301,7 +300,6 @@ def paperdetail(request,json_no,currindex,offset):
 	# relation.data_prepare()
 	# return HttpResponse("called relation")
 
-
 def seesimilar(request,json_no,currindex,offset):
 	return HttpResponse("From seesimilar")
 
@@ -318,12 +316,8 @@ def feedback(request):
 		choice = request.POST.get('choice',None)
 		json_no = request.POST.get('json_no',None)
 	except KeyError:
-		return HttpResponse("No feedback data found in the request object !!")
+		return render(request,'home/error.html',{"message":"No feedback data found in the request object"})
 	data = json.loads(str_data)
-	print("option: ",option)
-	print("choice: ",choice)
-	print("json_no: ",json_no)
-	# Work with new data 
 	
 	relevant_indices = []
 	irrelevant_indices = []
@@ -361,7 +355,7 @@ def feedback(request):
 		
 		# Recognize entities and count frequency
 		# Method one : using scispacy
-		frequency = {}
+		
 		if int(option) == 1:
 			nlp = spacy.load("en_ner_bionlp13cg_md")
 			doc = nlp(abs)
@@ -453,7 +447,7 @@ def feedback(request):
 			ii = ii + 1
 			if ii > 2: break
 		myobj = {'query' : feedbackquery, 'filepath' : filepath,'ismorefilter' : 0}
-		print(myobj)
+		# print(myobj)
 
 		# Third method: Use top terms as filter to create golden corpus
 		# ii = 0
@@ -466,7 +460,208 @@ def feedback(request):
 
 		return post(request,1,myobj)
 	else: # error reading json file
-		return HttpResponse("Error in reading json file")
+		return render(request,'home/error.html',{"message":"No json file found"})
+def processmesh(meshstring):
+	mesh = ""
+	found = 0
+	for c in meshstring:
+		if c == '/':
+			found = 1
+	if found:
+		mesharr = meshstring.split('/')
+		for i in range(0,len(mesharr)-1):
+			mesh += mesharr[i] + ' '
+		return mesh
+	else:
+		return meshstring		
+def rerank(request):
+	global best_mesh_terms
+	global best_mesh_terms_id
+	global tags
+	global query
+
+	if request.method == 'POST':
+		try:
+			str_data = request.POST.get('feedback',None)
+			json_no = request.POST.get('json_no',None)
+			option = request.POST.get('option',None)
+		except KeyError:
+			return render(request,'home/error.html',{"message":"No feedback data found in the request object"})
+		data = json.loads(str_data)
+		relevant_indices = []
+		irrelevant_indices = []
+		for obj in data:
+			if data[obj]['relevant'] == 1:
+				relevant_indices.append(data[obj]['offset'])
+			else:
+				irrelevant_indices.append(data[obj]['offset'])
+		print("relevant indices: ",relevant_indices)
+			
+		pp = postprocessing.PostProcessing()
+		trimmedtitles , trimmedabs, actualabstracts = pp.getalltrimmed(json_no,query) 
+		
+		# Rerank by frequent terms
+		if int(option) == 1: 
+			print("Requested rerank by frequent terms")
+			# get reranked docs from actualabstracts
+			abs = ""
+			if len(relevant_indices) > 0:
+				for index in relevant_indices:
+					abs += actualabstracts[index]
+			# get k-profile for feedback docs
+			nlp = spacy.load("en_ner_bionlp13cg_md")
+			doc = nlp(abs)
+			entities = ""
+			for ent in doc.ents:
+				entities += str(ent) + " "
+			frequency = Counter(entities.split()).most_common()
+			k_profile = []
+			k = 0
+			for term,score in frequency:
+				k_profile.append(term.lower())
+				if k == 20: 
+					break
+				k += 1
+			# individual docs k-profile
+			doc_k_profile = []
+			for abs in actualabstracts:
+				doc = nlp(abs)
+				entities = ""
+				for ent in doc.ents:
+					entities += str(ent) + " "
+				frequency = Counter(entities.split()).most_common()
+				doc_profile = []
+				k = 0
+				for term,score in frequency:
+					doc_profile.append(term.lower())
+					if k == 20: 
+						break
+					k += 1
+				doc_k_profile.append(doc_profile)
+			# similarity measure between feedback docs and each individual doc
+			# each entry will contain array of abstract index as multiple abs can might have same score
+			profile_obj = OrderedDict() 
+			for index in range(0, len(doc_k_profile)):
+				common = set(k_profile).intersection(set(doc_k_profile[index]))
+				score = len(common)
+				try:
+					profile_obj[str(score)].append(index)
+				except KeyError:
+					profile_obj[str(score)] = []
+					profile_obj[str(score)].append(index)
+			sorted_profile = sorted(profile_obj.items(),reverse=True) # more score first
+			finalabs = []
+			finaltitles = []
+			for key,indexarr in sorted_profile:
+				for index in indexarr:
+					finalabs.append(trimmedabs[index])
+					finaltitles.append(trimmedtitles[index])
+					if len(finaltitles) >= 10:
+						break
+			topdocs = zip(finaltitles, finalabs)
+			topmesh = OrderedDict()
+			for clus_no,json_arr in best_mesh_terms.items():
+				topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
+				
+		elif int(option) == 2:
+			print("Request for rerank by mesh terms")
+			# Rerank by frequent Mesh terms
+			if json_no:
+				try:
+					file_name = "home/data_folder/"+query+"/"+str(json_no)+'.json'
+					print("file: ", file_name)
+					with open(file_name, 'r') as f:
+						json_object = json.load(f)
+						data_mesh = json_object["meshterms"]
+				except IOError as e:
+					return render(request,'home/error.html',{"message":"Could not open file"})
+			# k-profile of mesh terms from selected docs
+			relevant_mesh = []
+			if len(relevant_indices) > 0:
+				for index in relevant_indices:
+					relevant_mesh.extend(data_mesh[index])
+			relevant_mesh_obj = {}
+			for meshterm in relevant_mesh:
+				mesh = processmesh(meshterm)
+				try:
+					relevant_mesh_obj[mesh] += 1
+				except KeyError:
+					relevant_mesh_obj[mesh] = 1
+			# if not enough mesh terms 
+			if len(relevant_mesh_obj) < 1:
+				return render(request,'home/error.html',{"message":"Not enough Mesh terms found in the selected documents"})
+			sorted_mesh_obj = sorted(relevant_mesh_obj.items(),key=lambda x:x[1],reverse=True)
+			k_profile_rel_mesh = []
+			k = 0
+			for key,v in sorted_mesh_obj:
+				k_profile_rel_mesh.append(key)
+				if k == 20:
+					break
+				k += 1
+			print("k-profile for relevant doc done")
+			# find k-profile for each doc of the selected json
+			k_profile_arr = []
+			for index in range(0,len(data_mesh)):
+				k_profile = []
+				mesh_obj = {}
+				for meshstring in data_mesh[index]:
+					mesh = processmesh(meshstring)
+					try:
+						mesh_obj[mesh] += 1
+					except KeyError:
+						mesh_obj[mesh] = 1
+				sorted_mesh_obj = sorted(mesh_obj.items(), key=lambda x:x[1], reverse=True)
+				k = 0
+				for key,v in sorted_mesh_obj:
+					k_profile.append(key)
+					if k == 20:
+						break
+					k += 1
+				k_profile_arr.append(k_profile)
+			print("k-profile for all doc done")
+			print("total abs :", len(actualabstracts))
+			print("profile len: ", len(k_profile_arr))
+			# similarity measure
+			profile_obj = OrderedDict()
+			for index in range(0,len(k_profile_arr)):
+				common = set(k_profile_rel_mesh).intersection(set(k_profile_arr[index]))
+				score = len(common)
+				try:
+					profile_obj[str(score)].append(index)
+				except KeyError:
+					profile_obj[str(score)] = []
+					profile_obj[str(score)].append(index)
+			sorted_profile = sorted(profile_obj.items(),reverse=True)
+			print("similarity measure done")
+			# compute topdocs
+			finalabs = []
+			finaltitles = []
+			for key,indexarr in sorted_profile:
+				for index in indexarr:
+					finalabs.append(trimmedabs[index])
+					finaltitles.append(trimmedtitles[index])
+					if(len(finaltitles) >= 10): 
+						break
+			topdocs = zip(finaltitles, finalabs)
+			topmesh = OrderedDict()
+			for clus_no,json_arr in best_mesh_terms.items():
+				topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
+		# start from 0th index
+		previndex = -10
+		nextindex = 10
+		currindex = 0
+		context = {
+			'query' : query,
+			'topdocs' : topdocs,
+			'topmesh' : topmesh,
+			'currindex' : currindex,
+			'previndex' : previndex,
+			'nextindex' : nextindex,
+			'json_no' : json_no,
+		}
+		return render(request,'home/detail.html',context)
+	else:
+		return render(request,'home/error.html',{"message":"Not a post request"})		
 
 def entity_feedback(request):
 	try:

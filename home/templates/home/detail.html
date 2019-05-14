@@ -41,12 +41,15 @@
                 // console.log(feedback);
                 let reas = document.getElementById('research');
                 let reas_button = document.getElementById("research-button");
+                let rerank_button = document.getElementById("rerank-button");
                 let paginate = document.getElementById("paginate-container");
 
                 if(Object.keys(feedback).length >= 1){
                     reas.style.display = 'block';
                     reas_button.style.background = '#f05771';
                     reas_button.style.color = 'white';
+                    rerank_button.style.background = '#f05771';
+                    rerank_button.style.color = 'white';
                     paginate.style.display = 'none';
                 }
                 else{
@@ -68,11 +71,14 @@
                 console.log(feedback);
                 let reas = document.getElementById("research");
                 let reas_button = document.getElementById("research-button");
+                let rerank_button = document.getElementById("rerank-button");
                 let paginate = document.getElementById("paginate-container");
                 if(Object.keys(feedback).length >= 1){
                     reas.style.display = 'block';
                     reas_button.style.background = '#f05771';
                     reas_button.style.color = 'white';
+                    rerank_button.style.background = '#f05771';
+                    rerank_button.style.color = 'white';
                     paginate.style.display = 'none';
                 }
                 else{
@@ -107,6 +113,29 @@
                     success: function (d){
                         // $("body").html(d); // freezing page after loading
                         // location.reload(); // needed as page was freezing but loads old page again
+                        document.clear();
+                        document.write(d); 
+                    }
+                });
+            }
+            function onRerank(json_no){
+                feedback = JSON.stringify(feedback);
+                option = 1;
+                if(document.getElementById("rerank-radio1").checked)
+                    option = 1;
+                else if(document.getElementById("rerank-radio2").checked)
+                    option = 2;
+                $("body").html("<h2 style=\" margin-top: 25%; margin-left: 50%\"> Loading...</h2>");
+                $.ajax({
+                    type: "POST",
+                    url: "/rerank/",
+                    data: {
+                        feedback,
+                        json_no,
+                        option,
+                        csrfmiddlewaretoken: '{{ csrf_token }}',
+                    },
+                    success: function (d){
                         document.clear();
                         document.write(d); 
                     }
@@ -187,6 +216,8 @@
                         </div>
                         <div id="research">
                             <button id="research-button" class="relevancy" data-toggle="modal" data-target="#feedback" >Re-search</button>
+                            <button style="background-color: white; border: none">OR</button>
+                            <button id="rerank-button" class="relevancy" data-toggle="modal" data-target="#rerank">Re-rank</button>
                         </div>
                 </div>
             </div>
@@ -228,6 +259,36 @@
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                       <button type="button" class="btn btn-primary" onclick="refreshPage('{{json_no}}');return false" data-dismiss="modal">Send message</button>
+                    </div>
+                  </div>
+                </div>
+            </div>
+
+            <!-- Modal for rerank -->
+            <div class="modal fade" id="rerank" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="exampleModalLabel">Rerank options</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="custom-control custom-radio">
+                            <!-- Maintain order of input tag and label tag -->
+                            <input type="radio" class="custom-control-input" id="rerank-radio1" name="rerank-name" checked> 
+                            <label class="custom-control-label" for="rerank-radio1">Rerank by frequent terms</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <!-- Maintain order of input tag and label tag -->
+                            <input type="radio" class="custom-control-input" id="rerank-radio2" name="rerank-name">
+                            <label class="custom-control-label" for="rerank-radio2">Rerank by frequent Mesh terms</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                      <button type="button" class="btn btn-primary" onclick="onRerank('{{json_no}}');return false" data-dismiss="modal">Send option</button>
                     </div>
                   </div>
                 </div>

@@ -17,14 +17,12 @@ class PostProcessing():
         # open json
         dfet = mesh_explosion.DataForEachMeshTerm(None,None)
         data_folder_name = dfet.get_data_foldername(query)
-        f = open(data_folder_name+"/"+str(json_no)+".json", 'r')
-        json_object = json.load(f)
-        f.close()
-        abstracts = json_object["abstracts"]
-        titles = json_object["titles"]
-        mesh_terms = json_object["meshterms"]
-        toptitles,topabs, completeabstracts = self.split_abstracts(index,abstracts,titles)
-        return toptitles, topabs, completeabstracts
+        with open(data_folder_name+"/"+str(json_no)+".json", 'r') as f:
+            json_object = json.load(f)
+            abstracts = json_object["abstracts"]
+            titles = json_object["titles"]
+            toptitles,topabs, completeabstracts = self.split_abstracts(index,abstracts,titles)
+            return toptitles, topabs, completeabstracts
 
     def split_abstracts(self,index,abstracts,titles):
         count = 0
@@ -38,6 +36,21 @@ class PostProcessing():
             index += 1
             count += 1
         return trimmedtitles,trimmedabstracts,completeabstracts
+    def getalltrimmed(self,json_no,query):
+        with open("home/data_folder/"+ query+ "/" + str(json_no)+".json", 'r') as f:
+            json_object = json.load(f)
+            abstracts = json_object["abstracts"]
+            titles = json_object["titles"]
+            return self.split_all_abstracts(abstracts,titles)
+    def split_all_abstracts(self,abstracts,titles):
+        trimmedabs = []
+        absarr = [] # nedded for Gene tagging
+        trimmedtitles = []
+        for index in range(0,len(abstracts)):
+            trimmedabs.append(self.getProcessedAbs(abstracts[index]))
+            trimmedtitles.append(self.getProcessedTitle(titles[index]))
+            absarr.append(abstracts[index])
+        return trimmedtitles,trimmedabs,absarr
 
     def getProcessedAbs(self, abstract):
         abs = ""

@@ -15,6 +15,7 @@ urlpatterns = [
     path('entityrelation/<int:json_no>/', views.entityrelation, name='entityrelation'),
     path('entities/<int:json_no>/<int:eoption>/', views.entities, name='entities'),
     path('user-feedback/', views.feedback, name='feedback'),
+    path('rerank/', views.rerank, name='rerank'),
     path('entity-feedback/', views.entity_feedback, name='entity-feedback'),
 
 ]
