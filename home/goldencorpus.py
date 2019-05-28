@@ -6,50 +6,27 @@ import xlrd
 
 class GoldenCorpus():
 
-    def __init__(self,query,filepath):
-        self.query = query
-        self.filepath = filepath
-        self.rel_docs = []
-        self.mesh_terms = []
+    def __init__(self):
+        pass
 
     def get_corpus_folder(self,query):
         return "home/golden_corpus/" + query
-        
-    def get_mesh_terms(self):
-        return self.mesh_terms
     
-    def get_rel_docs_pmid(self,feedbackarr):
+    def get_rel_docs_pmid(self,query,filepath,geneset):
         rel_doc = []
-        try:
-            rdoc = open("home/goldenpmid.txt","r")
-        except FileNotFoundError:
-            self.create_relevant_docs()
-            rdoc = open("home/goldenpmid.txt","r")
-            
+        # For every unique query we create this file (useful when same query searched)
+        path = "home/goldenpmids/"+query+"/goldenpmid.txt"
+        if os.path.exists(path):
+            rdoc = open(path,"r")
+        else:
+            self.create_relevant_docs(query,filepath,geneset)
+            rdoc = open(path,"r")
         arr = rdoc.read().split('\n')
         for v in arr:
             if v != '':
                 rel_doc.append(int(v,10))
         rdoc.close()
-        if feedbackarr:
-            print("Inside morefilter")
-            temp_doc = []
-            abstracts_folder_name = self.get_corpus_folder(self.query)
-            for doc in rel_doc:
-                try:
-                    # print("path: ",abstracts_folder_name+"/"+str(doc))
-                    rf = open(abstracts_folder_name+"/"+str(doc), 'r')
-                    content = self.preprocess(rf.read())
-                    for newterm in feedbackarr:
-                        if content.find(newterm):
-                            temp_doc.append(doc)
-                            # print("doc: ",doc,newterm)
-                            break
-                finally:
-                    rf.close()
-            return temp_doc
-        else:
-            return rel_doc
+        return rel_doc
 
     def preprocess(self,abstract):
         content = abstract.replace('\n', ' ')
@@ -75,29 +52,29 @@ class GoldenCorpus():
         
         return False,""
 
-    def fetchData(self):
+    def fetchData(self,query,count):
         print("Fetchdata called..")
-        _pmids, self.mesh_terms = api.fetch_data(self.query,200)
-        print("Total pmid got:----------------------------------> ",len(_pmids))
-        if self.saveGoldenCorpus(_pmids):
-            return True,self.mesh_terms
-        else: 
-            return False,self.mesh_terms
+        pmids, mesh_terms = api.fetch_data(query,count)
+        print("Total pmid got:----------------------------------> ",len(pmids))
+        if count > 1:
+            if self.saveGoldenCorpus(pmids,query):
+                return True, mesh_terms
+        # any other case return false
+        return False, mesh_terms
 
-
-    def saveGoldenCorpus(self, _pmids):
+    def saveGoldenCorpus(self, pmids, query):
         print("Save golden corpus called..")
         _genefile = []
-        if not os.path.exists(self.get_corpus_folder(self.query)):
-            os.mkdir(self.get_corpus_folder(self.query))
+        if not os.path.exists(self.get_corpus_folder(query)):
+            os.mkdir(self.get_corpus_folder(query))
             #  Download abs as a group of 200
-            if len(_pmids):
+            if len(pmids):
                 slist = []
                 count = 0
                 doccount = 1
 
-                total_parts = int(len(_pmids)/200)
-                for cid in _pmids:
+                total_parts = int(len(pmids)/200)
+                for cid in pmids:
                     if count < 200:
                         slist.append(cid)
                         count+=1
@@ -111,14 +88,14 @@ class GoldenCorpus():
                         slist = []
                         count = 0
                         doccount+=1
-                        self.split_abstracts(self.query, data)
+                        self.split_abstracts(query, data)
 
                 if count > 0:
                     ids = ""
                     for pmid in slist:
                         ids += str(pmid) + ","
                     data = api.get_abstract(ids)
-                    self.split_abstracts(self.query, data)
+                    self.split_abstracts(query, data)
                 print("Download done.")
                 return True
             else:
@@ -128,38 +105,43 @@ class GoldenCorpus():
             print("Corpus exists.")
             return True
 
-    def create_relevant_docs(self):
+    def create_relevant_docs(self,query,filepath, geneset):
+        print("Corpus creating.......")
         
-        print("Relevant docs creating.......")
-        if os.path.exists("home/" + self.filepath):
-            # For txt file type 
-            _filepointer = open("home/" + self.filepath,'r')
-            _genefile = _filepointer.read().split('\n')
-            # For xls file type
-            # path = ("home/" + self.filepath)
-            # wb = xlrd.open_workbook(path)
-            # _genefile = wb.sheet_by_index(0)
-
-            abstracts_folder_name = self.get_corpus_folder(self.query)
-            for _file in os.listdir(abstracts_folder_name):
-                # Must check if file exists later ------------------------------------
-                rf = open(abstracts_folder_name+"/"+_file, 'r')
-                content = self.preprocess(rf.read())
-                result,gene = self.checkRelevance(content,_genefile)
-                count = 0
-                if result:
-                    count += 1
-                    # print("file: ",file)
-                    # print("gene found: -- > ", gene)
-                    self.rel_docs.append(int(_file))
-            # Keep rel docs in a file for reuse 
-            realdoc = open("home/goldenpmid.txt","w")
-            for element in self.rel_docs:
-                realdoc.write('%d\n' % element)
-            realdoc.close()
-            print("Corpus done..")
+        rel_docs = []
+        if filepath:
+            path = "home/" + filepath
+            if os.path.exists(path):
+                # For txt file type 
+                with open(path,'r') as fp:
+                    genelist = fp.read().split('\n')
+        elif len(geneset) > 0:
+            genelist = geneset.split(',')
+            # incase user forget , then split by space
+            if len(genelist) == 1:
+                genelist = genelist[0].split()
         else:
-            print("Genefile not found...")
+            print("Corpus not done: neither file nor gene set given")
+
+        # print(genelist)
+        golden_folder_name = self.get_corpus_folder(query)
+        for _file in os.listdir(golden_folder_name):
+            # with open(golden_folder_name+"/"+_file, 'r') as rf:
+            #     content = self.preprocess(rf.read())
+            #     result,gene = self.checkRelevance(content,genelist)
+            #     if result:
+            rel_docs.append(int(_file))
+        # Keep rel docs in a file for reuse 
+        path = "home/goldenpmids/" + query
+        if not os.path.exists(path):
+            os.mkdir(path)
+        print(path)
+        realdoc = open(path+"/goldenpmid.txt","w")
+        for element in rel_docs:
+            realdoc.write('%d\n' % element)
+        realdoc.close()
+        print("Corpus done..")
+
 
     def split_abstracts(self,query, data):
 
@@ -171,7 +153,7 @@ class GoldenCorpus():
                 title = ""
                 citation = obj['MedlineCitation']
                 pmid = citation['PMID']['#text']
-                print(pmid)
+                # print(pmid)
 
                 # title extraction
                 if('ArticleTitle' in citation['Article']):

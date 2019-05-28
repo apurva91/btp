@@ -82,7 +82,7 @@ class DataForEachMeshTerm():
         return final
 
     def fetchMeshTermdata(self):
-        _retmax = 100
+        _retmax = 400
         if self.mesh_terms:
             self.expanded_mesh_terms = self.getMeshTermCombinations(self.mesh_terms)
         else:
@@ -111,8 +111,10 @@ class DataForEachMeshTerm():
                     title_list = []
                     abstract_list = []
                     meshterms = []
-
-                    article = lines['PubmedArticleSet']['PubmedArticle']
+                    try:
+                        article = lines['PubmedArticleSet']['PubmedArticle']
+                    except KeyError:
+                        continue
 
                     for obj in article:
                         text = ""

@@ -104,7 +104,7 @@
     </div>
     <div>
         {% if title %}
-            <h2>{{title}}</h2>
+            <h2>{{title | safe}}</h2>
         {% endif %}
         {% if abstract %}
             <div>
@@ -121,7 +121,7 @@
                     <h3>Mesh terms: </h3>
                     <ol>
                         {% for mesh in meshterm %}
-                            <li>{{mesh}}</li>
+                            <li>{{mesh | safe}}</li>
                         {% endfor %}
                     </ol>
                 {% endif %}

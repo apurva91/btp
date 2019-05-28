@@ -86,6 +86,16 @@ input {
     display: flex;
     flex-direction: column;
 }
+.entityrelation {
+    background-color: white;
+    border: none; 
+    color: #007bff; 
+    padding: 0px; 
+}
+.entityrelation:hover {
+    text-decoration: underline;
+    color: green;
+}
 .cloud {
     padding-left: 30px;
     display: flex;

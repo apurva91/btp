@@ -24,7 +24,9 @@ best_mesh_terms_id = OrderedDict()
 best_mesh_terms = OrderedDict()
 tags = []
 query = None
-filepath = None
+gene_filepath = None
+pmid_filepath = None
+gene_set = []
 stop_words = []
 mesh_terms = []
 
@@ -35,7 +37,10 @@ def post(request,isfeedback = None,feedobj = None):
 	global best_mesh_terms
 	global best_mesh_terms_id
 	global query
-	global filepath
+	global gene_filepath
+	global pmid_filepath
+	global gene_set
+	global cluster_algo
 	global tags
 	global mesh_terms
 
@@ -45,69 +50,81 @@ def post(request,isfeedback = None,feedobj = None):
 
 
 	if request.method == 'POST':
-		
+		# if it is a call from feedback method
 		if isfeedback :
 			print("feedback")
 			query = feedobj['query']
-			filepath = feedobj['filepath']
-			ismorefilter = feedobj['ismorefilter']
+			gene_filepath = feedobj['gene_filepath']
+			pmid_filepath = feedobj['pmid_filepath']
+			gene_set = feedobj['gene_set']
+			cluster_algo = feedobj['cluster_algo']
 		else:
-			print("simple")
+			print("non feedback")
 			query = request.POST.get('query',None)
-			filepath = request.POST.get('genefile',None)
+			gene_filepath = request.POST.get('genefile',None)
+			pmid_filepath = request.POST.get('pmidfile',None)
+			gene_set = request.POST.get('geneset',None)
+			cluster_algo = request.POST.get('cluster',None)
+			print("cluster algo : ", cluster_algo)
 		if query:
-			if filepath:
-				corpus = goldencorpus.GoldenCorpus(query,filepath)
-				found,mesh_terms = corpus.fetchData()
+			# create golden corpus
+			if gene_filepath or gene_set:
+				corpus = goldencorpus.GoldenCorpus()
+				found,mesh_terms = corpus.fetchData(query,10000)
 				if not found:
 					return HttpResponse("Error in fetching data")
 				else:
-					if ismorefilter:
-						print("came")
-						feedbackarr = feedobj['feedbackarr']
-						print("arr: ",feedbackarr)
-						rel_docs = corpus.get_rel_docs_pmid(feedbackarr)
-					else:
-						rel_docs = corpus.get_rel_docs_pmid(None)
-					# mesh_terms = corpus.get_mesh_terms()
-					if len(mesh_terms) > 0:
-						mesh_exp = mesh_explosion.DataForEachMeshTerm(mesh_terms,query)
-						path = mesh_exp.get_data_foldername(query)
-						clus = clusterer.Clusterer(rel_docs,path,True,5)
-						# Keeping globaly to get access from other functions
-						representative_id,representative, best_mesh_terms_id, best_mesh_terms = clus.cluster()
-					else:
-						return HttpResponse("No meshterms received from pubmed")
-
-					if representative:
-						# get all information for representative json
-						pp = postprocessing.PostProcessing()
-						# tags = pp.term_tagging(best_mesh_terms)
-						trimmedtitles , trimmedabs, completeabs = pp.getTitleAbs(0,representative_id,query) 
-						topdocs = zip(trimmedtitles, trimmedabs)
-						
-						topmesh = OrderedDict()
-						for clus_no,json_arr in best_mesh_terms.items():
-							topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
-
-						previndex = -10
-						nextindex = 10
-						currindex = 0
-						context = {
-							'query' : query,
-							'topdocs' : topdocs,
-							'topmesh' : topmesh,
-							# 'tags' : tags,
-							'currindex' : currindex,
-							'previndex' : previndex,
-							'nextindex' : nextindex,
-							'json_no' : representative_id,
-						}
-						return render(request,'home/detail.html',context)
-					else:
-						return HttpResponse("No result found!!")
+					rel_docs = corpus.get_rel_docs_pmid(query,gene_filepath,gene_set)
+					# return HttpResponse("testing")
+			# Golden corpus given
 			else:
-				return HttpResponse("No gene file found in post request !!")
+				path = "home/"+pmid_filepath
+				with open(path,"r") as fp:
+					rel_docs = fp.read().split('\n')
+				# print(rel_docs)
+				if len(rel_docs) < 20:
+					return render(request,'home/error.html',{"message":"Please give atleast 20 PMIDs"})
+			if len(mesh_terms) > 0:
+				mesh_exp = mesh_explosion.DataForEachMeshTerm(mesh_terms,query)
+				path = mesh_exp.get_data_foldername(query)
+				if cluster_algo == None or int(cluster_algo) == "1":
+					print("kmean")
+					clus = clusterer.Clusterer(rel_docs,path,True,5)
+				else:
+					print("dbscan")
+					clus = clusterer.Clusterer(rel_docs,path,False,5)
+				# Keeping globaly to get access from other functions
+				representative_id,representative, best_mesh_terms_id, best_mesh_terms = clus.cluster()
+			else:
+				return HttpResponse("No meshterms received from pubmed")
+
+			if representative:
+				# get all information for representative json
+				pp = postprocessing.PostProcessing()
+				# tags = pp.term_tagging(best_mesh_terms)
+				trimmedtitles , trimmedabs, completeabs = pp.getTitleAbs(0,representative_id,query) 
+				topdocs = zip(trimmedtitles, trimmedabs)
+				
+				topmesh = OrderedDict()
+				for clus_no,json_arr in best_mesh_terms.items():
+					topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
+
+				previndex = -10
+				nextindex = 10
+				currindex = 0
+				context = {
+					'query' : query,
+					'topdocs' : topdocs,
+					'topmesh' : topmesh,
+					# 'tags' : tags,
+					'currindex' : currindex,
+					'previndex' : previndex,
+					'nextindex' : nextindex,
+					'json_no' : representative_id,
+				}
+				return render(request,'home/detail.html',context)
+			else:
+				return HttpResponse("No result found!!")
 		else:
 			return HttpResponse("No query found in post request!!")
 	else:
@@ -187,7 +204,7 @@ def cluster_by_jsonno(json_no):
 
 def genecloud(request, json_no):
 	global query
-	global filepath
+	global gene_filepath
 
 	json_arr = cluster_by_jsonno(json_no)
 	pp = postprocessing.PostProcessing()
@@ -206,7 +223,7 @@ def meshcloud(request, json_no):
 	else:
 		return HttpResponse("Something wrong with mesh cloud!")
 
-def entityrelation(request, json_no):
+def entityrelation(request, json_no, option):
 	global query
 
 	json_arr = cluster_by_jsonno(json_no)
@@ -215,7 +232,7 @@ def entityrelation(request, json_no):
 	if flag:
 		return render(request,'home/multirelation.html',{"data": data})
 	else:
-		return HttpResponse("Something wrong !!")
+		return render(request,'home/error.html',{"message":"Something wrong with entity relation"})
 
 def entities(request,json_no,eoption):
 	global query
@@ -306,7 +323,10 @@ def seesimilar(request,json_no,currindex,offset):
 def feedback(request):
 	global stop_words
 	global mesh_terms
-	global filepath
+	global gene_filepath
+	global pmid_filepath
+	global gene_set
+	global cluster_algo
 	global query
 
 	error_occured = 0
@@ -329,8 +349,6 @@ def feedback(request):
 				irrelevant_indices.append(data[obj]['offset'])
 		# For each relevant paper count frequency of each word and 
 		# consider top frequent terms for next search
-		print("relevant indices: ",relevant_indices)
-		# print("irrele: ", irrelevant_indices)
 	elif int(choice) == 2: #Psudo-relevance : choose top 5 documents blindly
 		for index in range(0,5):
 			relevant_indices.append(index)
@@ -341,7 +359,6 @@ def feedback(request):
 			with open(file_name, 'r') as f:
 				json_object = json.load(f)
 		except IOError as e:
-			# return error feedback to user
 			error_occured = 1
 	if not error_occured:
 		data_abstract = json_object["abstracts"]
@@ -358,12 +375,11 @@ def feedback(request):
 		
 		if int(option) == 1:
 			nlp = spacy.load("en_ner_bionlp13cg_md")
-			doc = nlp(abs)
-			entities = ""
+			doc = nlp(abs) #only returns bio-medical terms
+			entities = "" 
 			for ent in doc.ents:
 				entities += str(ent) + " "
 			frequency = Counter(entities.split()).most_common()
-		# print(frequency)
 
 		# Method two: Association mining
 		# calculate association 'interest measure for each unique concept' and get the top scored concepts
@@ -399,68 +415,68 @@ def feedback(request):
 					concept_score[str(concept)] = len(alllines)*intersectioncount / mul
 			# sort concept_socore by value
 			concept_score = sorted(concept_score.items(), key=operator.itemgetter(1),reverse=True)
-			# print(concept_score)
-			with open('concept', 'wb') as con:
-				pickle.dump(concept_score,con)
+			print(concept_score)
+			# with open('concept', 'wb') as con:
+			# 	pickle.dump(concept_score,con)
 			# Find top k terms : using pretrained model 
 			# Load XGboost trained model
 			# Then predict 
 			# biological_model.dataset_prepare()
-			return HttpResponse("Will take long time . Better do in colab.research")
-			wordfile = 'word_representation'
-			word_dict = {}
-			with open(wordfile,'rb') as f:
-				word_dict = pickle.load(f)
-			print("word loaded")
-			filename = 'finalized_model.sav'
-			loaded_model = pickle.load(open(filename, 'rb'))
-			print("model loaded")
+			# return HttpResponse("Will take long time . Better do in colab.research")
+			# wordfile = 'word_representation'
+			# word_dict = {}
+			# with open(wordfile,'rb') as f:
+			# 	word_dict = pickle.load(f)
+			# print("word loaded")
+			# filename = 'finalized_model.sav'
+			# loaded_model = pickle.load(open(filename, 'rb'))
+			# print("model loaded")
+			
 			# Predict
+			# c = 0
+			# x_test = []
+			# for k,v in concept_score:
+			# 	try:
+			# 		x_test.append(word_dict[str(k)])
+			# 	except KeyError:
+			# 		continue
+			# print("test data done")
+			# y_pred = loaded_model.predict(x_test)
+			# print("prediction success")
+			# c = 0
+			# for i in range(0,len(y_pred)):
+			# 	if y_pred[i] == 1:
+			# 		frequency[str(x_test[i])] = 1
+			# 		c += 1
+			# 	if c >= 4:
+			# 		break
+			# print(frequency)
+
+			# simple top k terms of association mining
+			frequency = []
 			c = 0
-			x_test = []
-			for k,v in concept_score:
-				try:
-					x_test.append(word_dict[str(k)])
-				except KeyError:
-					continue
-			print("test data done")
-			y_pred = loaded_model.predict(x_test)
-			print("prediction success")
-			c = 0
-			for i in range(0,len(y_pred)):
-				if y_pred[i] == 1:
-					frequency[str(x_test[i])] = 1
-					c += 1
-				if c >= 4:
+			for item in concept_score:
+				frequency.append(item)
+				c += 1
+				if c == 2:
 					break
 			print(frequency)
-		# First method : find intersection with all mesh explosion and return result for nearest mesh
-		# mesh_explo = mesh_explosion.DataForEachMeshTerm(None,None)
-		# expanded_mesh_terms = mesh_explo.getMeshTermCombinations(mesh_terms)
-		# print(expanded_mesh_terms)
-
-		# Second method: add top terms with user query and search
+		# add top terms with user query and search
 		ii = 0
 		feedbackquery = query
+		# print(frequency)
+		# print("Top terms: ")
 		for k,v in frequency:
+			# print(str(k))
 			feedbackquery = feedbackquery +" "+ str(k)
 			ii = ii + 1
 			if ii > 2: break
-		myobj = {'query' : feedbackquery, 'filepath' : filepath,'ismorefilter' : 0}
-		# print(myobj)
-
-		# Third method: Use top terms as filter to create golden corpus
-		# ii = 0
-		# feedbackarr = []
-		# for k,v in frequency:
-		# 	feedbackarr.append(k)
-		# 	ii = ii + 1
-		# 	if ii >= 5: break
-		# myobj = {'query' : query,'filepath': filepath,'ismorefilter' : 1,'feedbackarr': feedbackarr}
+		myobj = {'query' : feedbackquery, 'gene_filepath' : gene_filepath, 'pmid_filepath' : pmid_filepath, 'gene_set' : gene_set, 'cluster_algo': cluster_algo}
 
 		return post(request,1,myobj)
-	else: # error reading json file
+	else: 
 		return render(request,'home/error.html',{"message":"No json file found"})
+
 def processmesh(meshstring):
 	mesh = ""
 	found = 0
@@ -474,6 +490,7 @@ def processmesh(meshstring):
 		return mesh
 	else:
 		return meshstring		
+
 def rerank(request):
 	global best_mesh_terms
 	global best_mesh_terms_id

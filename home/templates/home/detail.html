@@ -17,12 +17,26 @@
         <script>
             // handle search form radio buttons
             $(document).ready(function(){
+               
                 $("input[name$='same']").click(function(){
                     let temp = document.getElementsByClassName("left-middle-container");
                     temp[0].setAttribute("style","margin-top: 130px");
                     let val = $(this).val();
                     $("div.select-file").hide();
                     $("#option" + val).show();
+                    let id = "option"+val;
+                    if(id == "option1"){
+                        $('#pmid').val('');
+                        $('#gene-name-area').val('');
+                    }
+                    else if(id == "option2"){
+                        $('#gene').val('');
+                        $('#gene-name-area').val('');
+                    }
+                    else if(id == "option3"){
+                        $('#gene').val('');
+                        $('#pmid').val('');
+                    }
                 });
             });
             
@@ -149,7 +163,14 @@
                     location.href="{% url 'home:entities' json_no 2 %}";
                 }                
             }
-            
+            function onEntityrelation(){
+                if(document.getElementById("entity-rel-radio1").checked){
+                    location.href="{% url 'home:entityrelation' json_no 1 %}";
+                }
+                else if(document.getElementById("entity-rel-radio2").checked){
+                    location.href="{% url 'home:entityrelation' json_no 2 %}";
+                }
+            }
         </script>
     </head>
     <body>
@@ -168,7 +189,9 @@
                                     <!-- Radio buttons -->
                                     <div><input type="radio" name="same" value="1"> Gene file</div><br>
                                     <div><input type="radio" name="same" value="2"> PMID file</div><br>
-                                    <div><input type="radio" name="same" value="3"> Gene names</div>
+                                    <div><input type="radio" name="same" value="3"> Gene names</div><br>
+                                    <div style="background-color: pink"><input type="radio" name="cluster" value="1"> K-Means </div><br>
+                                    <div style="background-color: pink"><input type="radio" name="cluster" value="2"> DBSCAN</div>
                                 </div>
                                 <div id="option1" class="select-file">
                                     <!-- Gene file selection -->
@@ -178,13 +201,13 @@
                                 </div>	
                                 <div id="option2" class="select-file">
                                     <!-- PMID file selection -->
-                                    <label for="avatar" id="filelabel">Choose a PMID file:</label>
+                                    <label for="pmid" id="filelabel">Choose a PMID file:</label>
                                     &nbsp;&nbsp;&nbsp;
-                                    <input type="file" id="avatar" name="pmidfile" accept="text">
+                                    <input type="file" id="pmid" name="pmidfile" accept="text">
                                 </div>
                                 <div id="option3" class="select-file">
                                     <!-- Enter gene names -->
-                                    <textarea style="width: 95%; height: 65px; resize: none" name="gene" id="gene-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
+                                    <textarea style="width: 95%; height: 65px; resize: none" name="geneset" id="gene-name-area" cols="30" rows="10" style="width: 100%; height: 50px"></textarea>
                                 </div>
                             </div>	
                         </form>
@@ -258,7 +281,7 @@
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                      <button type="button" class="btn btn-primary" onclick="refreshPage('{{json_no}}');return false" data-dismiss="modal">Send message</button>
+                      <button type="button" class="btn btn-primary" onclick="refreshPage('{{json_no}}');return false" data-dismiss="modal">Send options</button>
                     </div>
                   </div>
                 </div>
@@ -269,7 +292,7 @@
                 <div class="modal-dialog" role="document">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h5 class="modal-title" id="exampleModalLabel">Rerank options</h5>
+                      <h5 class="modal-title" id="exampleModalLabel">Re-rank options</h5>
                       <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                       </button>
@@ -278,12 +301,12 @@
                         <div class="custom-control custom-radio">
                             <!-- Maintain order of input tag and label tag -->
                             <input type="radio" class="custom-control-input" id="rerank-radio1" name="rerank-name" checked> 
-                            <label class="custom-control-label" for="rerank-radio1">Rerank by frequent terms</label>
+                            <label class="custom-control-label" for="rerank-radio1">Re-rank by frequent terms</label>
                         </div>
                         <div class="custom-control custom-radio">
                             <!-- Maintain order of input tag and label tag -->
                             <input type="radio" class="custom-control-input" id="rerank-radio2" name="rerank-name">
-                            <label class="custom-control-label" for="rerank-radio2">Rerank by frequent Mesh terms</label>
+                            <label class="custom-control-label" for="rerank-radio2">Re-rank by frequent Mesh terms</label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -321,6 +344,33 @@
                     </div>
                 </div>
             </div>
+            <!-- Modal for relation extraction -->
+            <div class="modal fade" id="entity-relation" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Select Entity relation model</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="entity-rel-radio1" value="1" name="entity-rel-name" checked>
+                            <label class="custom-control-label" for="entity-rel-radio1">ML based method</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" id="entity-rel-radio2" value="2" name="entity-rel-name" >
+                            <label class="custom-control-label" for="entity-rel-radio2">Co-occurence based method</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="onEntityrelation('{{json_no}}')">I'm Sure</button>
+                    </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="middle-container">
                 <div style="margin: 0 auto">
@@ -329,14 +379,14 @@
                     </div>
                     <div class="cloud">
                         <span><a href="{% url 'home:genecloud' json_no %}">Gene Cloud</a></span>
-                        <span><a href="{% url 'home:entityrelation' json_no %}">Entity Relation</a></span>
+                        <button class="entityrelation" data-toggle="modal" data-target="#entity-relation">Entity Relation</button>
                         <span><a href="{% url 'home:meshcloud' json_no %}">Mesh Cloud</a></span>
                     </div>
                     <div>
                         <h2>More Information</h2>
                     </div>
                     <div class="cloud">
-                        <button style="background-color: white; border: none; color: #007bff; padding: 0px" data-toggle="modal" data-target="#entity">See all Entities</button>
+                        <button class="entityrelation" data-toggle="modal" data-target="#entity">See all Entities</button>
                     </div>
                 </div>
             </div>
@@ -347,7 +397,7 @@
                 <div class="meshterms">
                     {% if topmesh %}
                         {% for clus_no,json_arr in topmesh.items %}
-                            <h2>Cluster {{ clus_no }}</h2>
+                            <h2 style="background-color: pink">Cluster {{ clus_no }}</h2>
                             {% for mesh, meshid in json_arr %}
                                 <li class="meshterm">
                                     <a href="{% url 'home:meshresult' meshid %}" class="meshlink">{{mesh}}</a>
