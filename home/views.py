@@ -44,10 +44,8 @@ def post(request,isfeedback = None,feedobj = None):
 	global tags
 	global mesh_terms
 
-	ismorefilter = 0
 	representative_id = 0
 	representative = None
-
 
 	if request.method == 'POST':
 		# if it is a call from feedback method
@@ -65,7 +63,6 @@ def post(request,isfeedback = None,feedobj = None):
 			pmid_filepath = request.POST.get('pmidfile',None)
 			gene_set = request.POST.get('geneset',None)
 			cluster_algo = request.POST.get('cluster',None)
-			print("cluster algo : ", cluster_algo)
 		if query:
 			# create golden corpus
 			if gene_filepath or gene_set:
