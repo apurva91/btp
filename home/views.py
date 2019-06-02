@@ -32,8 +32,16 @@ mesh_terms = []
 
 def index(request):
 	return render(request,'home/index.html')
-    
+
+# called when user enters query and gene set 
+# It is a post request
 def post(request,isfeedback = None,feedobj = None):
+	# if gene given it constructs golden corpus 
+	# if pmids given , it is used as golden corpus
+	# then computes all combination of queries by calling mesh explosion file
+	# finally cluster all queries and return information of best query
+	# for best query corresponding json is opened and context object is made 
+	# some variables are made global so that other functions can use last instance value of the variables
 	global best_mesh_terms
 	global best_mesh_terms_id
 	global query
@@ -44,64 +52,78 @@ def post(request,isfeedback = None,feedobj = None):
 	global tags
 	global mesh_terms
 
+	# local variables
 	representative_id = 0
 	representative = None
+	corpuslen = 10000
+
 
 	if request.method == 'POST':
-		# if it is a call from feedback method
+		# if it is a call from feedback function
 		if isfeedback :
 			print("feedback")
 			query = feedobj['query']
 			gene_filepath = feedobj['gene_filepath']
 			pmid_filepath = feedobj['pmid_filepath']
 			gene_set = feedobj['gene_set']
-			cluster_algo = feedobj['cluster_algo']
+			cluster_algo = feedobj['cluster_algo'] # not using
 		else:
 			print("non feedback")
 			query = request.POST.get('query',None)
 			gene_filepath = request.POST.get('genefile',None)
 			pmid_filepath = request.POST.get('pmidfile',None)
 			gene_set = request.POST.get('geneset',None)
-			cluster_algo = request.POST.get('cluster',None)
+			cluster_algo = request.POST.get('cluster',None) # not using 
 		if query:
-			# create golden corpus
 			if gene_filepath or gene_set:
+				# create golden corpus
 				corpus = goldencorpus.GoldenCorpus()
-				found,mesh_terms = corpus.fetchData(query,10000)
+				found,mesh_terms = corpus.fetchData(query,corpuslen)
 				if not found:
-					return HttpResponse("Error in fetching data")
+					return render(request,'home/error.html',{"message":"Error in fetching data"})
 				else:
 					rel_docs = corpus.get_rel_docs_pmid(query,gene_filepath,gene_set)
 					# return HttpResponse("testing")
-			# Golden corpus given
 			else:
-				path = "home/"+pmid_filepath
-				with open(path,"r") as fp:
-					rel_docs = fp.read().split('\n')
-				# print(rel_docs)
-				if len(rel_docs) < 20:
-					return render(request,'home/error.html',{"message":"Please give atleast 20 PMIDs"})
+				# Golden corpus already given
+				if pmid_filepath:
+					path = "home/"+pmid_filepath
+					with open(path,"r") as fp:
+						rel_docs = fp.read().split('\n')
+					# print(rel_docs)
+					if len(rel_docs) < 20:
+						return render(request,'home/error.html',{"message":"Please give atleast 20 PMIDs"})
+				else:
+					return render(request,'home/error.html',{"message":"Neither gene set nor pmids given"})
 			if len(mesh_terms) > 0:
+				# construct all combination of queries and for each query retrieve top k documents
+				# top k documents are stored in json files in data_folder
 				mesh_exp = mesh_explosion.DataForEachMeshTerm(mesh_terms,query)
 				path = mesh_exp.get_data_foldername(query)
-				if cluster_algo == None or int(cluster_algo) == "1":
-					print("kmean")
-					clus = clusterer.Clusterer(rel_docs,path,True,5)
-				else:
-					print("dbscan")
-					clus = clusterer.Clusterer(rel_docs,path,False,5)
+				# default call k-Means algo with k = 5
+				clus = clusterer.Clusterer(rel_docs,path,True,5)
+
+				# You can add new clustering algo here
+				# if cluster_algo == None or int(cluster_algo) == "1":
+				# 	print("kmean")
+				# else:
+				# 	print("dbscan")
+				# 	clus = clusterer.Clusterer(rel_docs,path,False,5)
+
 				# Keeping globaly to get access from other functions
+				# representative_id is best json no
+				# representative is best query 
+				#  best_mesh_terms_id is dictionary of cluster no and corresponding array of json numbers in that cluster
 				representative_id,representative, best_mesh_terms_id, best_mesh_terms = clus.cluster()
 			else:
-				return HttpResponse("No meshterms received from pubmed")
-
+				return render(request,'home/error.html',{"message":"No meshterms received from pubmed"})
 			if representative:
-				# get all information for representative json
+				# get all information from representative json
+				# then make a context object and send to template as argument
 				pp = postprocessing.PostProcessing()
-				# tags = pp.term_tagging(best_mesh_terms)
 				trimmedtitles , trimmedabs, completeabs = pp.getTitleAbs(0,representative_id,query) 
 				topdocs = zip(trimmedtitles, trimmedabs)
-				
+				# topmeh contains zipped value of best queries and their json number 
 				topmesh = OrderedDict()
 				for clus_no,json_arr in best_mesh_terms.items():
 					topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
@@ -113,7 +135,6 @@ def post(request,isfeedback = None,feedobj = None):
 					'query' : query,
 					'topdocs' : topdocs,
 					'topmesh' : topmesh,
-					# 'tags' : tags,
 					'currindex' : currindex,
 					'previndex' : previndex,
 					'nextindex' : nextindex,
@@ -121,13 +142,18 @@ def post(request,isfeedback = None,feedobj = None):
 				}
 				return render(request,'home/detail.html',context)
 			else:
-				return HttpResponse("No result found!!")
+				return render(request,'home/error.html',{"message":"No result found!!"})
 		else:
-			return HttpResponse("No query found in post request!!")
+			return render(request,'home/error.html',{"message":"No query found in post request!!"})
 	else:
-		return HttpResponse("Not a post request!")
+		return render(request,'home/error.html',{"message":"Not a post request!!"})
 
-def get(request, json_no):
+
+# used when user clicks other search queries 
+def othermeshquery(request, json_no):
+	# open json_no file and get title, abstracts
+	# this is done in post processing file
+	# also get other mesh information 
 	global best_mesh_terms
 	global best_mesh_terms_id
 	global tags
@@ -137,13 +163,15 @@ def get(request, json_no):
 
 		pp = postprocessing.PostProcessing()
 		# tags = pp.term_tagging(mesh)
+
+		# zip is used to simplify accessing data in templates [need single for loop]
 		trimmedtitles , trimmedabs, completeabs = pp.getTitleAbs(0,json_no,query) 
 		topdocs = zip(trimmedtitles, trimmedabs)
 		
 		topmesh = OrderedDict()
 		for clus_no,json_arr in best_mesh_terms.items():
 			topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
-
+		# start with index 0 from selected json [which contain clicked query]
 		previndex = -10
 		nextindex = 10
 		currindex = 0
@@ -158,7 +186,9 @@ def get(request, json_no):
 		}
 		return render(request,'home/detail.html',context)
 
+# when user click next and previous button we show next 10 or previous 10 documents from corresponding json file
 def paginate(request, json_no, abs_index):
+	# similar to othermeshquery function but with proper index
 	global best_mesh_terms
 	global best_mesh_terms_id
 	global tags
@@ -179,18 +209,17 @@ def paginate(request, json_no, abs_index):
 		'query' : query,
 		'topdocs' : topdocs,
 		'topmesh' : topmesh,
-		# 'tags' : tags,
 		'currindex' : currindex,
 		'previndex' : previndex,
 		'nextindex' : nextindex,
 		'json_no': json_no,
-		# 'isrf' : isrf
 	}
 	return render(request,'home/detail.html',context)
 
+# get all the json number of the cluster which contains json_no 
+# used in gene cloud, entityrelation , entities etc functions
 def cluster_by_jsonno(json_no):
 	global best_mesh_terms_id
-	print(best_mesh_terms_id)
 	json_arr = []
 	for k,v in best_mesh_terms_id.items():
 		for jno in v:
@@ -198,7 +227,7 @@ def cluster_by_jsonno(json_no):
 				json_arr = v
 				break
 	return json_arr
-
+# gene cloud is constructed for an entire cluster
 def genecloud(request, json_no):
 	global query
 	global gene_filepath
@@ -209,8 +238,9 @@ def genecloud(request, json_no):
 	if flag:
 		return render(request, 'home/genecloud.html',{'data': data})
 	else:
-		return HttpResponse('Something wrong : check postprocessing.py')
-
+		return render(request,'home/error.html',{"message":"Something wrong : check postprocessing.py"})
+# For now it constructs for a single json 
+# But you can do it for current cluster just like gene cloud
 def meshcloud(request, json_no):
 	global query
 	pp = postprocessing.PostProcessing()
@@ -219,7 +249,7 @@ def meshcloud(request, json_no):
 		return render(request, 'home/meshcloud.html', {'meshobj': meshobj})
 	else:
 		return HttpResponse("Something wrong with mesh cloud!")
-
+# showing entity relation in a cluster . Relation between protein-protein, gene-protein and disease-protein
 def entityrelation(request, json_no, option):
 	global query
 
@@ -230,7 +260,7 @@ def entityrelation(request, json_no, option):
 		return render(request,'home/multirelation.html',{"data": data})
 	else:
 		return render(request,'home/error.html',{"message":"Something wrong with entity relation"})
-
+# To show all entities of the selected cluster
 def entities(request,json_no,eoption):
 	global query
 
@@ -240,12 +270,11 @@ def entities(request,json_no,eoption):
 	print("arr: ",json_arr)
 	pp = postprocessing.PostProcessing()
 	flag,allentities,data = pp.get_entities(query,json_arr,eoption)
-	# print(allentities)
 	if flag:
 		return render(request,'home/entities.html',{'entities': allentities,'data':data})
 	else:
 		return HttpResponse("No entities")
-
+# when user clicks a title this is invoked
 def paperdetail(request,json_no,currindex,offset):
 	# open json
 	global query
@@ -267,7 +296,8 @@ def paperdetail(request,json_no,currindex,offset):
 	disease = []
 	gene = []
 	protein = []
-	# calling rule based entity recognition model
+	# neural network based model
+	# rule based entity recognition model
 	# disease,gene,protein = enrecog.entity_recog_nn(abs)
 	disease,gene,protein = enrecog.entity_recog_rb(abstracts[currindex+offset])
 	if disease:
@@ -278,6 +308,7 @@ def paperdetail(request,json_no,currindex,offset):
 		protein = list(protein)
 	if len(disease):
 		for rog in disease:
+			# this is used to highlight entities 
 			toreplace = "<span class='disease-highlight' data-toggle=\"tooltip\" title=\"Disease\">\g<0></span>"
 			if len(rog) > 2:
 				pattern = re.escape(rog)
@@ -311,8 +342,6 @@ def paperdetail(request,json_no,currindex,offset):
 	}
 
 	return render(request,'home/paperdetail.html',context)
-	# relation.data_prepare()
-	# return HttpResponse("called relation")
 
 def seesimilar(request,json_no,currindex,offset):
 	return HttpResponse("From seesimilar")
@@ -413,43 +442,14 @@ def feedback(request):
 			# sort concept_socore by value
 			concept_score = sorted(concept_score.items(), key=operator.itemgetter(1),reverse=True)
 			print(concept_score)
-			# with open('concept', 'wb') as con:
-			# 	pickle.dump(concept_score,con)
-			# Find top k terms : using pretrained model 
-			# Load XGboost trained model
-			# Then predict 
-			# biological_model.dataset_prepare()
-			# return HttpResponse("Will take long time . Better do in colab.research")
-			# wordfile = 'word_representation'
-			# word_dict = {}
-			# with open(wordfile,'rb') as f:
-			# 	word_dict = pickle.load(f)
-			# print("word loaded")
-			# filename = 'finalized_model.sav'
-			# loaded_model = pickle.load(open(filename, 'rb'))
-			# print("model loaded")
-			
-			# Predict
-			# c = 0
-			# x_test = []
-			# for k,v in concept_score:
-			# 	try:
-			# 		x_test.append(word_dict[str(k)])
-			# 	except KeyError:
-			# 		continue
-			# print("test data done")
-			# y_pred = loaded_model.predict(x_test)
-			# print("prediction success")
-			# c = 0
-			# for i in range(0,len(y_pred)):
-			# 	if y_pred[i] == 1:
-			# 		frequency[str(x_test[i])] = 1
-			# 		c += 1
-			# 	if c >= 4:
-			# 		break
-			# print(frequency)
+			# NOTE:
+			# Here we used a model that predicts whether a term is biomedical or not
+			# But model was not good enough. Accuracy was 87%. But we need more. You can try.
+			# we prepared our dataset.
+			# biomedical terms we got by tokenizing all the mesh from every documents and kept in a dictionay
+			# and non biomedical term by tokenizing abstracts [not in biomedical dictionary]
 
-			# simple top k terms of association mining
+			# simple top k = 2 terms of association mining
 			frequency = []
 			c = 0
 			for item in concept_score:
@@ -461,15 +461,13 @@ def feedback(request):
 		# add top terms with user query and search
 		ii = 0
 		feedbackquery = query
-		# print(frequency)
-		# print("Top terms: ")
+		# add top k terms with old query and call post function again with new query and old gene set 
 		for k,v in frequency:
-			# print(str(k))
 			feedbackquery = feedbackquery +" "+ str(k)
 			ii = ii + 1
 			if ii > 2: break
 		myobj = {'query' : feedbackquery, 'gene_filepath' : gene_filepath, 'pmid_filepath' : pmid_filepath, 'gene_set' : gene_set, 'cluster_algo': cluster_algo}
-
+		# calling post function
 		return post(request,1,myobj)
 	else: 
 		return render(request,'home/error.html',{"message":"No json file found"})
@@ -488,6 +486,7 @@ def processmesh(meshstring):
 	else:
 		return meshstring		
 
+# it suffles documents of current json file based on similarity score of each document and feedback documents
 def rerank(request):
 	global best_mesh_terms
 	global best_mesh_terms_id
@@ -501,6 +500,7 @@ def rerank(request):
 			option = request.POST.get('option',None)
 		except KeyError:
 			return render(request,'home/error.html',{"message":"No feedback data found in the request object"})
+		# get feedback documents
 		data = json.loads(str_data)
 		relevant_indices = []
 		irrelevant_indices = []
@@ -522,7 +522,8 @@ def rerank(request):
 			if len(relevant_indices) > 0:
 				for index in relevant_indices:
 					abs += actualabstracts[index]
-			# get k-profile for feedback docs
+			# get k-profile(list of k top terms) for feedback docs where we take k = 20
+			# check sci-spacy in github
 			nlp = spacy.load("en_ner_bionlp13cg_md")
 			doc = nlp(abs)
 			entities = ""
@@ -563,7 +564,7 @@ def rerank(request):
 				except KeyError:
 					profile_obj[str(score)] = []
 					profile_obj[str(score)].append(index)
-			sorted_profile = sorted(profile_obj.items(),reverse=True) # more score first
+			sorted_profile = sorted(profile_obj.items(),reverse=True) # greater score first
 			finalabs = []
 			finaltitles = []
 			for key,indexarr in sorted_profile:
@@ -578,8 +579,8 @@ def rerank(request):
 				topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
 				
 		elif int(option) == 2:
-			print("Request for rerank by mesh terms")
 			# Rerank by frequent Mesh terms
+			print("Request for rerank by mesh terms")
 			if json_no:
 				try:
 					file_name = "home/data_folder/"+query+"/"+str(json_no)+'.json'
@@ -677,6 +678,7 @@ def rerank(request):
 	else:
 		return render(request,'home/error.html',{"message":"Not a post request"})		
 
+# invoked on user feedback
 def entity_feedback(request):
 	try:
 		str_data = request.POST.get('feedbackdata',None)
@@ -686,7 +688,9 @@ def entity_feedback(request):
 	print(data)
 	return JsonResponse({"message": "Thank you for your valuable feedback"})	
 
+# you should check this function and make it better 
 def findalllines(abstracts):
+	# finds all lines from a text by checking occurences of .
 	abslist = []
 	line = ""
 	nline = 0
@@ -702,7 +706,7 @@ def findalllines(abstracts):
 			else:
 				line += abs[x]
 	return abslist
-
+# helper function of association mining algo
 def findallconcepts(abstracts):
 	conceptlist = []
 	upperconceptlist = []
@@ -717,7 +721,7 @@ def findallconcepts(abstracts):
 					conceptlist.append(word)
 					upperconceptlist.append(word.upper())
 	return conceptlist
-
+# helper function of association mining algo
 def getPartialQueryCount(line,query):
 	python_s_words = list(get_stop_words('en'))         #About 900 stopwords
 	nltk_words = list(stopwords.words('english'))       #About 150 stopwords
@@ -731,7 +735,7 @@ def getPartialQueryCount(line,query):
 			count += 1
 	weighted_interested = count/len(query_words)
 	return weighted_interested
-
+# helper function of association mining algo
 def isbelong(line, concept):
 	for word in line.split():
 		if concept == word:

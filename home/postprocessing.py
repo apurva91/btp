@@ -36,12 +36,14 @@ class PostProcessing():
             index += 1
             count += 1
         return trimmedtitles,trimmedabstracts,completeabstracts
+    
     def getalltrimmed(self,json_no,query):
         with open("home/data_folder/"+ query+ "/" + str(json_no)+".json", 'r') as f:
             json_object = json.load(f)
             abstracts = json_object["abstracts"]
             titles = json_object["titles"]
             return self.split_all_abstracts(abstracts,titles)
+    
     def split_all_abstracts(self,abstracts,titles):
         trimmedabs = []
         absarr = [] # nedded for Gene tagging

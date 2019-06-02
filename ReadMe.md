@@ -46,12 +46,12 @@
 	- [ python manage.py runserver ] in the terminal
 	- Then goto browser and type [ localhost:8000 ]
 
-## Work flow of Django framework 
-Steps:
-	1. User enters a URL in the browser
-	2. Django match that url in both the url files 
-	3. Once a url matches, corresponding view Function or Class is triggered 
-	4. Finally browser shows received rendered Html page
+# Work flow of Django framework 
+
+- User enters a URL in the browser
+- Django match that url in both the url files 
+- Once a url matches, corresponding view Function or Class is triggered 
+- Finally browser shows received rendered Html page
 
 That's it. For more, goto official Django website :)
 
@@ -60,14 +60,15 @@ That's it. For more, goto official Django website :)
 
 ## Structure of our code
 
-NOTE: Do not goto seachtool folder inside searchtool project. This folder contains all settings
+**NOTE**: Do not goto seachtool folder inside searchtool project. This folder contains all settings
 
 ### home/urls.py
-	- contains all the urls of our app 'home'
-	- If you want to add new functionality you modify this url file only
+- contains all the urls of our app 'home'
+- If you want to add new functionality you modify this url file only not other url file
 
 ### home/views.py
 
 This contains functions corresponding to each url. I will describe parameters, other function calling and return value.
+
 
 

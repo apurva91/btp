@@ -186,52 +186,6 @@ class Clusterer:
 						done = 1
 
 		print("representative: ", representative)
-		print("id: ", representative_id)
+		print("representative Id: ", representative_id)
 
-
-		# open given gene list
-		# path = ("home/gene_list.xlsx")
-		# wb = xlrd.open_workbook(path)
-		# sheet = wb.sheet_by_index(0)
-		# mydata = ""
-		# meshObj = {}
-		# geneObj={}
-		# for name in top_cluster_query_ids[0]:
-		# 	# open a file name.json
-		# 	f = open(self.data_folder_name + str(name)+".json", 'r')
-		# 	json_object = json.load(f)
-		# 	f.close()
-		# 	absstring = " "
-		# 	titlestring = " "
-		# 	for abs in json_object["abstracts"]:
-		# 		absstring += abs
-		# 	for title in json_object["titles"]:
-		# 		titlestring += title
-		# 	for mesharr in json_object["meshterms"]:
-		# 		for mesh in mesharr:
-		# 			try:
-		# 				meshObj[mesh] += 1
-		# 			except KeyError:
-		# 				meshObj[mesh] = 1
-		# 	mydata += absstring + titlestring
-			
-		# 	for row in range(0,sheet.nrows):
-		# 		for col in range(0,sheet.ncols):
-		# 			if row != 0 and col!=0 and col != 1 and col!=8 and col!=9 and col!=10 and col!=11 and col!=12 and sheet.cell_value(row,col):
-		# 				if str(sheet.cell_value(row,col))+" " in mydata:
-		# 					try:
-		# 						geneObj[sheet.cell_value(row,col)] += 1			
-		# 					except KeyError:
-		# 						geneObj[sheet.cell_value(row,col)] = 1
-		# 	print('File Completed: ',name)
-
-		# # print(geneObj)
-		# print('------------------------------------------------------')
-		# for w in sorted(geneObj, key=geneObj.get, reverse=True):
-		# 	print (w, geneObj[w])
-		# print('-------------------------------------------------------')
-		# for w in sorted(meshObj, key=meshObj.get, reverse=True):
-			# print (w, meshObj[w])
-
-		# print(representative)
 		return representative_id,representative,top_cluster_query_ids, top_cluster_query

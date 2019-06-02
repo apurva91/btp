@@ -44,6 +44,7 @@ class DataForEachMeshTerm():
         part += terms[pos-2]
         part += terms[pos-1]
         part += terms[pos]
+        part += ']'    # so lazy to find bug . Just added it :)
         mystr.append(part)
 
         # get combs of each arr of mystr
@@ -82,6 +83,8 @@ class DataForEachMeshTerm():
         return final
 
     def fetchMeshTermdata(self):
+        # download top 400 documents for each query and keep in a json file.
+        # json file helps better access of information in cluster file 
         _retmax = 400
         if self.mesh_terms:
             self.expanded_mesh_terms = self.getMeshTermCombinations(self.mesh_terms)
@@ -94,7 +97,7 @@ class DataForEachMeshTerm():
             if not os.path.exists(self.get_data_foldername(self.get_search_term())):
                 os.mkdir(self.get_data_foldername(self.get_search_term()))
                 count = 0
-                print('=================================================')
+                print('-------------------------------------------------------')
                 for term in self.expanded_mesh_terms:
                     print(term)
                     count = count + 1
