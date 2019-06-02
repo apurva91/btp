@@ -94,6 +94,6 @@ once cluster is done, all the feature is computed here for requested json file o
 scispacy model and rule based model is implemented here. It is used mainly in postprocessing file.
 
 
-**_Important_**
+## **_Important_**
 
 Please go through the code starting from __post__ function in __views.py__ file. The code is totally commented.
