@@ -521,7 +521,7 @@ class PostProcessing():
 
     def get_entities(self,query,json_arr,option):
         if len(json_arr) < 0:
-            return 0,None
+            return 0,None, None
         else:
             abstracts = []
             pmids = []
@@ -591,5 +591,5 @@ class PostProcessing():
                 data = zip(titles,abstracts,pmids)
                 return 1, entities,data
             else:
-                return 0,None
+                return 0,None, None
                             
