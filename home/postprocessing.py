@@ -294,6 +294,42 @@ class PostProcessing():
                 print("No genes found !!")
                 return 0,None
 
+    def gene_file(self,query,json_arr):
+        print(query)
+        print(json_arr)
+        if len(json_arr) < 0:
+            return []
+        else:
+            all_json_abstracts = []
+            gene_objects = {}
+            for json_id in json_arr:
+                try:
+                    path = "home/data_folder/"+query+"/"+str(json_id)+'.json'
+                    with open(path,'r') as f:
+                        json_object = json.load(f)
+                        abstracts = json_object["abstracts"]
+                        all_json_abstracts.extend(abstracts)
+                        pmids = json_object["articleIds"]
+                        titles = json_object["titles"]
+                        for index in range(0,len(abstracts)):
+                            diseases,genes,proteins = enrecog.entity_recog_rb(abstracts[index])
+                            for gene in genes:
+                                try:
+                                    gene_objects[gene.lower()]["title"].append(titles[index])
+                                    gene_objects[gene.lower()]["pmids"].append(pmids[index])
+                                except KeyError:
+                                    obj = {}
+                                    obj["name"] = gene
+                                    obj["children"] = None
+                                    obj["title"] = []
+                                    obj["pmids"] = []
+                                    obj["title"].append(titles[index])
+                                    obj["pmids"].append(pmids[index])
+                                    gene_objects[gene.lower()] = obj
+                except FileNotFoundError:
+                    continue
+            return [ gene_objects[x]["name"] for x in gene_objects]
+
     def mesh_cloud(self,term_id,search_term):
         print("Mesh cloud called..")
         file_name = "home/data_folder/"+search_term+"/"+str(term_id)+'.json'

@@ -123,7 +123,7 @@ def post(request,isfeedback = None,feedobj = None):
 				pp = postprocessing.PostProcessing()
 				trimmedtitles , trimmedabs, completeabs = pp.getTitleAbs(0,representative_id,query) 
 				topdocs = zip(trimmedtitles, trimmedabs)
-				# topmeh contains zipped value of best queries and their json number 
+				# topmesh contains zipped value of best queries and their json number 
 				topmesh = OrderedDict()
 				for clus_no,json_arr in best_mesh_terms.items():
 					topmesh[clus_no] = zip(json_arr,best_mesh_terms_id[clus_no])
@@ -227,6 +227,20 @@ def cluster_by_jsonno(json_no):
 				json_arr = v
 				break
 	return json_arr
+
+def genefile(request, json_no):
+	global query
+	global gene_filepath
+
+	json_arr = cluster_by_jsonno(json_no)
+	pp = postprocessing.PostProcessing()
+	data = pp.gene_file(query, json_arr)
+	response = HttpResponse("\n".join(data),content_type="application/text")
+	response["Content-Disposition"] = "attachment; filename=genefile.txt"
+	return response
+	# return HttpResponse("\n".join(data))
+	
+
 # gene cloud is constructed for an entire cluster
 def genecloud(request, json_no):
 	global query
@@ -239,6 +253,7 @@ def genecloud(request, json_no):
 		return render(request, 'home/genecloud.html',{'data': data})
 	else:
 		return render(request,'home/error.html',{"message":"Something wrong : check postprocessing.py"})
+
 # For now it constructs for a single json 
 # But you can do it for current cluster just like gene cloud
 def meshcloud(request, json_no):

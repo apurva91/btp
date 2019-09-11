@@ -2,14 +2,8 @@ import requests
 import xmltodict
 
 def get_proxy():
-    # http_proxy  = "http://tanmo174101028:4TvZz67q@202.141.80.22:3128/"
-    # https_proxy  = "https://tanmo174101028:4TvZz67q@202.141.80.22:3128/"
-    # ftp_proxy   = "ftp://tanmo174101028:4TvZz67q@202.141.80.22:3128/"
-
     proxyDict = {
-        # "http"  : http_proxy,
-        # "https" : https_proxy,
-        # "ftp"   : ftp_proxy
+        # "http"  : "http://username:password@ip:port",
     }
     return proxyDict
 

@@ -399,6 +399,9 @@
                         {% for clus_no,json_arr in topmesh.items %}
                             <h2 style="background-color: pink">Cluster {{ clus_no }}</h2>
                             {% for mesh, meshid in json_arr %}
+                            {%if forloop.counter0 == 0%}
+                            <a href="/genefile/{{meshid}}">Download Gene File</a>
+                            {%endif%}
                                 <li class="meshterm">
                                     <a href="{% url 'home:meshresult' meshid %}" class="meshlink">{{mesh}}</a>
                                 </li>
