@@ -1,7 +1,7 @@
 
-# How to run our code
+# LitExplorer
 
-Steps for setting up the softare.
+## Setting it up:
 
 ```
 sudo apt-get install python3 python3-pip
@@ -18,7 +18,7 @@ python manage.py migrate
 mkdir home/goldenpmids home/golden_corpus home/data_folder
 ```
 
-Steps for running the software
+## Running it:
 
 ```
 source project_env/bin/activate
@@ -29,41 +29,41 @@ python manage.py runserver
 Visit http://localhost:8000 on your browser to use the software.
 
 
-# Documentation
+## Documentation
 
-## Structure of our code
+### Structure of our code
 
-**NOTE**: Do not goto seachtool folder inside searchtool project. This folder contains all settings
+**NOTE**: Do not goto searchtool folder inside searchtool project. This folder contains all settings
 
-### home/urls.py
+#### home/urls.py
 - contains all the urls of our app 'home'
 - If you want to add new functionality you modify this url file only not other url file
 
-### home/views.py
+#### home/views.py
 
 This contains functions corresponding to each url.
 
-### home/goldencorpus.py
+#### home/goldencorpus.py
 
 downloads documents for full query , 200 at a time and keep in the file system.
 
-### home/mesh_explosion.py
+#### home/mesh_explosion.py
 
 Computes all combination of queries from full query and for each of the new query, top k(we used k = 400) documents are retrived and kept in a json file for efficient access in cluster file.
 
-### home/cluster.py 
+#### home/cluster.py 
 
 all the json file read and clustered. Then returned top n clusters to view file
 
-### home/postprocessing.py
+#### home/postprocessing.py
 
 once cluster is done, all the feature is computed here for requested json file or entire cluster.
 
-## home/entity_recognition.py
+### home/entity_recognition.py
 
 scispacy model and rule based model is implemented here. It is used mainly in postprocessing file.
 
 
-## **_Important_**
+### **_Important_**
 
 Please go through the code starting from __post__ function in __views.py__ file. The code is totally commented.
